@@ -1,0 +1,362 @@
+/* ==========================================================================
+   GIS MAP & RADAR STYLES
+   Dark Leaflet map customization, pulsing beacons, hazard zones & legends
+   ========================================================================== */
+
+.map-container-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 480px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  background: #060a12;
+}
+
+.gis-map-element {
+  width: 100%;
+  height: 100%;
+  background: #090e1a !important;
+  z-index: 1;
+}
+
+/* Custom dark tile filter for OpenStreetMap or CartoDB tiles */
+.leaflet-tile {
+  filter: brightness(0.72) invert(1) contrast(3.2) hue-rotate(200deg) saturate(0.35) brightness(0.75);
+}
+
+.leaflet-container {
+  background: #070c16 !important;
+  font-family: var(--font-sans) !important;
+}
+
+/* Map Header Floating Overlay Controls */
+.map-floating-controls {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 500;
+  pointer-events: none;
+  gap: 12px;
+}
+
+.map-floating-controls > * {
+  pointer-events: auto;
+}
+
+.map-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid var(--border-medium);
+  backdrop-filter: blur(8px);
+  padding: 8px 14px;
+  border-radius: 8px;
+  color: var(--text-main);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+  width: 260px;
+}
+
+.map-search-box input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  outline: none;
+  width: 100%;
+}
+
+.map-search-box input::placeholder {
+  color: var(--text-dim);
+}
+
+.map-layer-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid var(--border-medium);
+  backdrop-filter: blur(8px);
+  padding: 6px;
+  border-radius: 10px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+}
+
+.layer-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition-fast);
+}
+
+.layer-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.layer-btn.active {
+  background: var(--bg-surface-elevated);
+  border-color: var(--border-active);
+  color: #fff;
+}
+
+.layer-btn.fire.active {
+  border-color: rgba(249, 115, 22, 0.6);
+  background: rgba(249, 115, 22, 0.18);
+  color: #fb923c;
+}
+
+.layer-btn.flood.active {
+  border-color: rgba(6, 182, 212, 0.6);
+  background: rgba(6, 182, 212, 0.18);
+  color: #38bdf8;
+}
+
+.layer-btn.air.active {
+  border-color: rgba(168, 85, 247, 0.6);
+  background: rgba(168, 85, 247, 0.18);
+  color: #c084fc;
+}
+
+.layer-btn.heat.active {
+  border-color: rgba(239, 68, 68, 0.6);
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+}
+
+.layer-btn.water.active {
+  border-color: rgba(59, 130, 246, 0.6);
+  background: rgba(59, 130, 246, 0.18);
+  color: #60a5fa;
+}
+
+/* Map Legend */
+.map-legend-overlay {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 10px 14px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+.legend-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+}
+
+.legend-items {
+  display: flex;
+  gap: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-dot.low { background: var(--risk-low); box-shadow: 0 0 6px var(--risk-low); }
+.legend-dot.mod { background: var(--risk-mod); box-shadow: 0 0 6px var(--risk-mod); }
+.legend-dot.high { background: var(--risk-high); box-shadow: 0 0 6px var(--risk-high); }
+.legend-dot.crit { background: var(--risk-crit); box-shadow: 0 0 8px var(--risk-crit); }
+
+/* Custom Marker CSS Pulsing Beacon */
+.custom-gis-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marker-pin {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 0 12px rgba(0,0,0,0.6);
+  border: 2px solid #ffffff;
+}
+
+.marker-pin.crit {
+  background: radial-gradient(circle, #ef4444, #991b1b);
+}
+
+.marker-pin.high {
+  background: radial-gradient(circle, #f97316, #c2410c);
+}
+
+.marker-pin.mod {
+  background: radial-gradient(circle, #f59e0b, #b45309);
+}
+
+.marker-pin.low {
+  background: radial-gradient(circle, #10b981, #047857);
+}
+
+.marker-pin.sensor {
+  background: radial-gradient(circle, #06b6d4, #0e7490);
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+}
+
+.marker-pin.team {
+  background: radial-gradient(circle, #8b5cf6, #5b21b6);
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+}
+
+/* Radar pulse wave behind pin */
+.marker-pulse {
+  position: absolute;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  animation: radar-sweep 2.2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+.marker-pulse.crit {
+  background: rgba(239, 68, 68, 0.4);
+  border: 2px solid rgba(239, 68, 68, 0.8);
+}
+
+.marker-pulse.high {
+  background: rgba(249, 115, 22, 0.35);
+  border: 2px solid rgba(249, 115, 22, 0.7);
+}
+
+@keyframes radar-sweep {
+  0% { transform: scale(0.3); opacity: 0.9; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* Custom Leaflet Popup Styling */
+.leaflet-popup-content-wrapper {
+  background: rgba(15, 23, 42, 0.95) !important;
+  border: 1px solid var(--border-medium) !important;
+  color: var(--text-main) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(12px) !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-content {
+  margin: 12px 16px !important;
+  line-height: 1.4 !important;
+}
+
+.leaflet-popup-tip {
+  background: rgba(15, 23, 42, 0.95) !important;
+  border: 1px solid var(--border-medium) !important;
+}
+
+.popup-hazard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.popup-hazard-title {
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.popup-telemetry-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  margin: 10px 0;
+  font-size: 12px;
+}
+
+.popup-telemetry-item span:first-child {
+  color: var(--text-muted);
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.popup-telemetry-item span:last-child {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #fff;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.popup-btn {
+  flex: 1;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.popup-btn.primary {
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+.popup-btn.secondary {
+  background: var(--bg-surface-elevated);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}
