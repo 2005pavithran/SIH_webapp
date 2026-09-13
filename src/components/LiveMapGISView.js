@@ -17,17 +17,17 @@ export function createLiveMapGISView() {
     const state = store.getState();
 
     container.innerHTML = `
-      <div class="view-header" style="margin-bottom: 12px;">
-        <div class="view-title-group">
-          <h1>
-            <span>🗺️ LIVE GIS MULTI-HAZARD MAP</span>
-            <span class="live-pulse-badge">GIS ENGINE ACTIVE</span>
+      <div class="view-header-row" style="margin-bottom: 12px;">
+        <div>
+          <h1 class="view-title-main">
+            <span>🗺️ GIS RISK MAP & SITUATIONAL INTELLIGENCE</span>
+            <span class="status-badge info">SPATIAL TELEMETRY ACTIVE</span>
           </h1>
-          <p>Real-time spatial visualization of sensor nodes, perimeter propagation, high-risk inundation zones, and rescue assets</p>
+          <p class="view-desc-sub">Multi-hazard geospatial tracking of sensor nodes, hazard contours, and emergency response teams</p>
         </div>
-        <div class="view-actions">
-          <div class="region-selector" style="background: var(--bg-card);">
-            <select id="gis-focus-region">
+        <div class="view-actions-group">
+          <div class="region-dropdown-wrap">
+            <select class="region-dropdown-select" id="gis-focus-region" aria-label="Focus Catchment Region">
               ${REGIONS.map(r => `<option value="${r.id}" ${r.id === state.selectedRegionId ? 'selected' : ''}>Focus: ${r.name}</option>`).join('')}
             </select>
           </div>
@@ -35,46 +35,58 @@ export function createLiveMapGISView() {
       </div>
 
       <div class="map-container-wrapper" style="flex: 1; min-height: 520px;">
-        <!-- Map Floating Controls -->
+        <!-- Floating Toolbar -->
         <div class="map-floating-controls">
           <div class="map-search-box">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" id="full-map-search-input" placeholder="Search node, river basin or district...">
+            <input type="text" id="full-map-search-input" placeholder="Search node, river basin, or shelter...">
           </div>
 
-          <div class="map-layer-pills">
-            <button class="layer-btn fire ${state.mapLayers.fire ? 'active' : ''}" data-layer="fire">🔥 Fire Hotspots</button>
-            <button class="layer-btn flood ${state.mapLayers.flood ? 'active' : ''}" data-layer="flood">🌊 Flood Inundation</button>
-            <button class="layer-btn air ${state.mapLayers.air ? 'active' : ''}" data-layer="air">🌫 Air Quality Plumes</button>
-            <button class="layer-btn heat ${state.mapLayers.heat ? 'active' : ''}" data-layer="heat">🌡 Heat Thermal</button>
-            <button class="layer-btn water ${state.mapLayers.sensors ? 'active' : ''}" data-layer="sensors">📡 Sensor Nodes</button>
-            <button class="layer-btn ${state.mapLayers.teams ? 'active' : ''}" data-layer="teams">🚑 NDRF Teams</button>
-            <button class="layer-btn ${state.mapLayers.shelters ? 'active' : ''}" data-layer="shelters">⛺ Relief Shelters</button>
+          <div class="map-control-actions">
+            <div class="map-basemap-select-wrap">
+              <select id="full-map-basemap-select" title="Change Base Map Layer">
+                <option value="osm" selected>🗺️ Street Map</option>
+                <option value="cartoLight">🏙️ Carto Light</option>
+                <option value="satellite">🛰️ Satellite</option>
+                <option value="topo">⛰️ Topographic</option>
+              </select>
+            </div>
+
+            <div class="map-layer-pills">
+              <button class="layer-btn flood ${state.mapLayers.flood ? 'active' : ''}" data-layer="flood">🌊 Flood</button>
+              <button class="layer-btn fire ${state.mapLayers.fire ? 'active' : ''}" data-layer="fire">🔥 Wildfire</button>
+              <button class="layer-btn air ${state.mapLayers.air ? 'active' : ''}" data-layer="air">🌫 Air Quality</button>
+              <button class="layer-btn heat ${state.mapLayers.heat ? 'active' : ''}" data-layer="heat">🌡 Heat</button>
+              <button class="layer-btn ${state.mapLayers.sensors ? 'active' : ''}" data-layer="sensors">📡 Nodes</button>
+              <button class="layer-btn ${state.mapLayers.teams ? 'active' : ''}" data-layer="teams">🚑 Teams</button>
+              <button class="layer-btn ${state.mapLayers.shelters ? 'active' : ''}" data-layer="shelters">⛺ Shelters</button>
+            </div>
           </div>
         </div>
 
-        <!-- Leaflet GIS Map Element -->
+        <!-- Leaflet Map Container -->
         <div id="full-screen-gis-map" class="gis-map-element"></div>
 
-        <!-- Map Legend -->
+        <!-- Legend -->
         <div class="map-legend-overlay">
           <div class="legend-title">Hazard Severity & Assets</div>
           <div class="legend-items">
             <div class="legend-item"><div class="legend-dot low"></div> Low Risk</div>
             <div class="legend-item"><div class="legend-dot mod"></div> Moderate</div>
-            <div class="legend-item"><div class="legend-dot high"></div> High Warning</div>
-            <div class="legend-item"><div class="legend-dot crit"></div> Critical Action</div>
-            <div class="legend-item">🚑 Response Unit</div>
-            <div class="legend-item">⛺ Safe Shelter</div>
+            <div class="legend-item"><div class="legend-dot high"></div> High</div>
+            <div class="legend-item"><div class="legend-dot crit"></div> Critical</div>
+            <div class="legend-item">📡 Node</div>
+            <div class="legend-item">🚑 Unit</div>
+            <div class="legend-item">⛺ Shelter</div>
           </div>
         </div>
       </div>
     `;
 
-    // Attach Handlers
+    // Layer buttons
     container.querySelectorAll('.layer-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const layerKey = btn.getAttribute('data-layer');
@@ -84,6 +96,17 @@ export function createLiveMapGISView() {
       });
     });
 
+    // Basemap selector
+    const basemapSelect = container.querySelector('#full-map-basemap-select');
+    if (basemapSelect) {
+      basemapSelect.addEventListener('change', (e) => {
+        if (gisInstance) {
+          gisInstance.setBasemap(e.target.value);
+        }
+      });
+    }
+
+    // Focus region
     container.querySelector('#gis-focus-region').addEventListener('change', (e) => {
       store.setRegion(e.target.value);
       const reg = REGIONS.find(r => r.id === e.target.value);
@@ -92,6 +115,7 @@ export function createLiveMapGISView() {
       }
     });
 
+    // Search input
     const searchInp = container.querySelector('#full-map-search-input');
     searchInp.addEventListener('input', (e) => {
       const q = e.target.value.toLowerCase().trim();

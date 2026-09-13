@@ -7,11 +7,12 @@ class SimulationEngine {
   constructor() {
     this.interval = null;
     this.tickCount = 0;
+    this.avitick = 0;
   }
 
   start() {
     if (this.interval) clearInterval(this.interval);
-    this.interval = setInterval(() => this.tick(), 3000);
+    this.interval = setInterval(() => this.tick(), 4000);
   }
 
   stop() {
@@ -24,29 +25,177 @@ class SimulationEngine {
   tick() {
     this.tickCount++;
     const state = store.getState();
+    const nowIso = new Date().toISOString();
 
-    // 1. Apply micro-fluctuations to sensors
-    const sensorUpdates = state.sensors.map(sensor => {
-      const tempJitter = (Math.random() * 0.4 - 0.2);
-      const waterJitter = sensor.type === 'water' ? (Math.random() * 0.04 - 0.02) : 0;
-      const pm25Jitter = Math.floor(Math.random() * 5 - 2);
+    // 1. Apply micro-fluctuations to Active sensors only
+    const sensorUpdates = state.sensors
+      .filter(s => s.status !== 'Offline' && s.health !== 'Damaged')
+      .map(sensor => {
+        const tempJitter = (Math.random() * 0.3 - 0.15);
+        const waterJitter = sensor.type === 'water' ? (Math.random() * 0.03 - 0.015) : 0;
+        const pm25Jitter = Math.floor(Math.random() * 4 - 2);
 
-      const newWater = sensor.waterLevel ? Math.max(0.2, Number((sensor.waterLevel + waterJitter).toFixed(2))) : sensor.waterLevel;
-      const newTemp = Number((sensor.temp + tempJitter).toFixed(1));
-      const newPm25 = Math.max(10, sensor.pm25 + pm25Jitter);
+        const newWater = sensor.waterLevel ? Math.max(0.2, Number((sensor.waterLevel + waterJitter).toFixed(2))) : sensor.waterLevel;
+        const newTemp = sensor.temp ? Number((sensor.temp + tempJitter).toFixed(1)) : sensor.temp;
+        const newPm25 = sensor.pm25 ? Math.max(10, sensor.pm25 + pm25Jitter) : sensor.pm25;
 
-      return {
-        id: sensor.id,
-        temp: newTemp,
-        waterLevel: newWater,
-        pm25: newPm25
-      };
+        return {
+          id: sensor.id,
+          temp: newTemp,
+          waterLevel: newWater,
+          pm25: newPm25,
+          lastDataTime: nowIso
+        };
+      });
+
+    // 2. Every 6th tick, flip a Maintenance sensor to Active occasionally
+    if (this.tickCount % 6 === 0) {
+      const maintenanceSensor = state.sensors.find(s => s.health === 'Maintenance Required' && Math.random() > 0.6);
+      if (maintenanceSensor) {
+        sensorUpdates.push({
+          id: maintenanceSensor.id,
+          status: 'Online',
+          health: 'Active',
+          battery: Math.min(100, maintenanceSensor.battery + 30),
+          signal: Math.max(-72, maintenanceSensor.signal + 22),
+          lastDataTime: nowIso
+        });
+      }
+      // Occasionally flip active to degraded (not every tick)
+      const actives = state.sensors.filter(s => s.health === 'Active' && s.battery < 55);
+      if (actives.length && Math.random() > 0.7) {
+        const picked = actives[Math.floor(Math.random() * actives.length)];
+        sensorUpdates.push({
+          id: picked.id,
+          status: 'Degraded',
+          health: 'Maintenance Required',
+          lastDataTime: nowIso
+        });
+      }
+    }
+
+    // 3. Micro-jitter latency and uptime (small variations, not jumpy)
+    const latencyMs = Math.floor(135 + Math.sin(this.tickCount / 7) * 12 + Math.random() * 6);
+
+    // 4. If Avinashi scenario is active, progressively escalate AVS sensors
+    const st = state;
+    if (st.activeScenario === 'avinashi_flood') {
+      this.avitick++;
+      const stage = Math.min(5, this.avitick);
+      const avinashiUpdates = [
+        { id: 'AVS-001', waterLevel: Number((1.9 + stage * 0.45).toFixed(2)), soilMoisture: 70 + stage * 5, risk: ['Low','Moderate','High','Critical','Critical','Critical'][stage] },
+        { id: 'AVS-002', waterLevel: Number((1.7 + stage * 0.38).toFixed(2)), soilMoisture: 66 + stage * 5, risk: ['Low','Low','Moderate','High','High','Critical'][stage] },
+        { id: 'AVS-003', waterLevel: Number((2.2 + stage * 0.42).toFixed(2)), soilMoisture: 72 + stage * 5, risk: ['Low','Moderate','High','High','Critical','Critical'][stage] },
+        { id: 'AVS-006', waterLevel: Number((1.8 + stage * 0.35).toFixed(2)), soilMoisture: 68 + stage * 4, risk: ['Low','Low','Moderate','High','High','High'][stage] },
+        { id: 'CBE-002', waterLevel: Number((2.3 + stage * 0.18).toFixed(2)), soilMoisture: 60 + stage * 3, risk: ['Moderate','Moderate','High','High','High','High'][stage] }
+      ];
+      // Merge into sensorUpdates
+      avinashiUpdates.forEach(au => {
+        const existing = sensorUpdates.find(u => u.id === au.id);
+        if (existing) Object.assign(existing, au);
+        else sensorUpdates.push(au);
+      });
+      // Fire one new progression alert at stage 2+
+      if (this.avitick === 2 || this.avitick === 4) {
+        const sev = this.avitick === 2 ? 'Warning' : 'Critical';
+        store.addAlert({
+          id: 'ALT-AVS-' + this.tickCount,
+          hazard: 'Flood',
+          severity: sev,
+          title: this.avitick === 2 ? 'Avinashi Flood Watch — Water Level Rising' : '🚨 AVS FLOOD EMERGENCY: Evacuate Low-Lying Zones',
+          location: 'Avinashi • Noyyal River Basin',
+          timeAgo: 'Just now',
+          timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          aiConfidence: 91,
+          description: this.avitick === 2
+            ? 'Noyyal River water level rising 0.15 m/hr above flood watch threshold at 3.4 m.'
+            : 'Danger level (4.0 m) breached at AVS-001 Upstream. Sarkarsamakulam downstream inundation imminent.',
+          coordinates: [11.1920, 77.2050],
+          sensorId: 'AVS-001'
+        });
+        const aiUpdate = {
+          hazard: 'Flood',
+          riskScore: Math.min(99, 72 + stage * 6),
+          riskLevel: stage < 3 ? 'High' : 'Critical',
+          trend: '↗ Increasing (' + (stage * 0.25).toFixed(2) + 'm/hr)',
+          predictionText: `Avinashi Noyyal River basin flood progression stage ${stage}. Forecast crest in 45-60 mins at AVS-003.`,
+          factors: [
+            { name: 'Noyyal Gorge Gauge (AVS-001)', weight: 36, value: (1.9 + stage * 0.45).toFixed(2) + 'm', impact: stage < 3 ? 'high' : 'critical' },
+            { name: 'Coimbatore Upstream Rainfall', weight: 28, value: (28 + stage * 12) + ' mm/hr', impact: stage < 3 ? 'high' : 'critical' },
+            { name: 'Canal Gate Discharge', weight: 20, value: (180 + stage * 40) + ' m³/s', impact: 'high' },
+            { name: 'Soil Saturation (AVS-003)', weight: 16, value: (72 + stage * 5) + '%', impact: stage < 3 ? 'moderate' : 'high' }
+          ]
+        };
+        store.updateSimulation(null, null, aiUpdate);
+      }
+    }
+
+    // 5. Recompute KPI (totals based on expanded 20 sensor set)
+    const kpiUpdates = { latencyMs };
+
+    store.updateSimulation(sensorUpdates, kpiUpdates, null);
+  }
+
+  triggerAvinashiFloodScenario() {
+    const state = store.getState();
+    state.activeScenario = 'avinashi_flood';
+    this.avitick = 0;
+    this.tickCount = 0;
+
+    // Switch focus to Avinashi for both modes and populate full situation data
+    store.setPublicLocation('avinashi');
+    if (state.selectedPublicLocation) {
+      state.selectedPublicLocation.riskLevel = 'High';
+      state.selectedPublicLocation.activeWarning = '🌊 Flood Warning — Coimbatore Upstream Surge Inflowing to Avinashi';
+      state.selectedPublicLocation.shortExplanation = 'Severe monsoon cloudburst over Coimbatore foothills has produced rapid runoff. Noyyal River water level at upstream gorge gauge AVS-001 has risen to 2.40m and is accelerating.';
+      if (state.selectedPublicLocation.environmental) {
+        state.selectedPublicLocation.environmental.waterLevel = '2.40 m';
+        state.selectedPublicLocation.environmental.rainfall = '42 mm/hr (Heavy Rain)';
+      }
+    }
+
+    // Baseline stage 1 updates
+    const sensorUpdates = [
+      { id: 'AVS-001', waterLevel: 2.4, risk: 'High', soilMoisture: 76, temp: 26.0, lastDataTime: new Date().toISOString() },
+      { id: 'AVS-002', waterLevel: 2.2, risk: 'Moderate', soilMoisture: 72, lastDataTime: new Date().toISOString() },
+      { id: 'AVS-003', waterLevel: 2.8, risk: 'High', soilMoisture: 80, lastDataTime: new Date().toISOString() },
+      { id: 'AVS-006', waterLevel: 2.2, risk: 'Moderate', soilMoisture: 74, lastDataTime: new Date().toISOString() },
+      { id: 'CBE-002', waterLevel: 2.6, risk: 'High', soilMoisture: 66, lastDataTime: new Date().toISOString() }
+    ];
+
+    const aiUpdate = {
+      hazard: 'Flood',
+      riskScore: 82,
+      riskLevel: 'High',
+      trend: '↗ Increasing',
+      predictionText: 'Noyyal River levels rising after Coimbatore upstream cloudburst. Forecast crest 0.6m above danger level.',
+      factors: [
+        { name: 'Noyyal Gorge Gauge (AVS-001)', weight: 38, value: '2.4m / Warn 2.0m', impact: 'high' },
+        { name: 'Coimbatore Upstream Rainfall', weight: 30, value: '42 mm/hr (Heavy)', impact: 'high' },
+        { name: 'Dam Release Gates (CBE-002)', weight: 18, value: '220 m³/s', impact: 'moderate' },
+        { name: 'Downstream Soil Saturation', weight: 14, value: '80%', impact: 'high' }
+      ]
+    };
+
+    store.updateSimulation(sensorUpdates, { criticalIncidents: state.kpi.criticalIncidents + 1 }, aiUpdate);
+
+    store.addAlert({
+      id: 'ALT-AVS-KICKOFF',
+      hazard: 'Flood',
+      severity: 'Warning',
+      title: 'Avinashi • Flood Initiated — Coimbatore Upstream Surge',
+      location: 'Avinashi (Tiruppur District)',
+      timeAgo: 'Just now',
+      timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      aiConfidence: 90,
+      description: 'Upstream Noyyal River runoff has increased above watch levels. Sarkarsamakulam and lower canal at risk.',
+      coordinates: [11.1881, 77.2235],
+      sensorId: 'AVS-001'
     });
 
-    // 2. Micro-jitter latency and uptime
-    const latencyMs = Math.floor(135 + Math.random() * 20);
-
-    store.updateSimulation(sensorUpdates, { latencyMs }, null);
+    showToast('🌊 SIMULATION: Coimbatore → Avinashi Flood Scenario Activated!', 'crit');
+    store.notify('public_location_change', state.selectedPublicLocation);
+    store.notify('ui_mode_change', state.uiMode);
   }
 
   triggerFlashFloodScenario() {
@@ -137,17 +286,23 @@ class SimulationEngine {
   resetBaselineScenario() {
     const state = store.getState();
     state.activeScenario = 'baseline';
+    this.avitick = 0;
 
     const sensorUpdates = [
-      { id: 'N-003', waterLevel: 2.8, risk: 'Moderate', soilMoisture: 72, temp: 28.5 },
-      { id: 'N-011', temp: 34.2, hum: 42, pm25: 65, risk: 'Moderate' },
-      { id: 'N-002', waterLevel: 2.1, risk: 'Low', soilMoisture: 55 }
+      { id: 'N-003', waterLevel: 2.8, risk: 'Moderate', soilMoisture: 72, temp: 28.5, lastDataTime: new Date().toISOString() },
+      { id: 'N-011', temp: 34.2, hum: 42, pm25: 65, risk: 'Moderate', lastDataTime: new Date().toISOString() },
+      { id: 'N-002', waterLevel: 2.1, risk: 'Low', soilMoisture: 55, lastDataTime: new Date().toISOString() },
+      { id: 'AVS-001', waterLevel: 1.9, risk: 'Low', soilMoisture: 60, lastDataTime: new Date().toISOString() },
+      { id: 'AVS-002', waterLevel: 1.6, risk: 'Low', soilMoisture: 58, lastDataTime: new Date().toISOString() },
+      { id: 'AVS-003', waterLevel: 2.2, risk: 'Low', soilMoisture: 62, lastDataTime: new Date().toISOString() },
+      { id: 'AVS-006', waterLevel: 1.8, risk: 'Low', soilMoisture: 56, lastDataTime: new Date().toISOString() },
+      { id: 'CBE-002', waterLevel: 2.2, risk: 'Moderate', soilMoisture: 52, lastDataTime: new Date().toISOString() }
     ];
 
     const aiUpdate = {
       hazard: 'Flood',
-      riskScore: 68,
-      riskLevel: 'Moderate',
+      riskScore: 58,
+      riskLevel: 'Low',
       trend: '→ Stabilized',
       predictionText: 'Environmental metrics returning to normal seasonal threshold bands across all regional sensor networks.',
       factors: [

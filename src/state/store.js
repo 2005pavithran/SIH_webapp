@@ -7,16 +7,20 @@ import {
   RESPONSE_TEAMS,
   RELIEF_SHELTERS,
   AI_PREDICTION_FACTORS,
-  REGIONS
+  REGIONS,
+  PUBLIC_LOCATIONS
 } from '../utils/mockData.js';
 import { audioAlert } from '../utils/audioAlert.js';
 
 class AppStore {
   constructor() {
     this.state = {
-      currentView: 'dashboard', // dashboard, live-map, risk-map, alerts, ai-prediction, sensors, analytics, incidents, reports, settings
-      selectedRegionId: 'district-x',
+      currentView: 'dashboard', // dashboard, live-map, risk-map, dynamic-risk, alerts, ai-prediction, sensors, analytics, incidents, teams, reports, settings, staff-services, public
+      selectedRegionId: 'avinashi',
       soundEnabled: true,
+      uiMode: 'AUTHORITY', // PUBLIC | AUTHORITY
+      selectedPublicLocation: JSON.parse(JSON.stringify(PUBLIC_LOCATIONS[0])),
+      publicLocations: JSON.parse(JSON.stringify(PUBLIC_LOCATIONS)),
       
       // Live Data
       alerts: JSON.parse(JSON.stringify(INITIAL_ALERTS)),
@@ -49,8 +53,8 @@ class AppStore {
 
       // Top Statistics
       kpi: {
-        totalSensors: 1284,
-        onlineSensors: 1243,
+        totalSensors: 20,
+        onlineSensors: 17,
         activeAlerts: 12,
         criticalIncidents: 4,
         uptime: 96.8,
@@ -61,7 +65,19 @@ class AppStore {
       selectedSensor: null,
       selectedIncident: null,
       selectedAlert: null,
-      activeScenario: 'baseline'
+      activeScenario: 'baseline',
+
+      // Map footer ticker queue
+      tickerMessages: [
+        'Noyyal River discharge above seasonal norm — flood watch active for Avinashi downstream',
+        'Rainfall: 14.2 mm/hr recorded at Coimbatore upstream station',
+        'Shelter capacity: 1,450 of 4,800 occupied (30%)',
+        'NDRF Team 04 deployed to Vythiri sector — ETA 9 min',
+        'IN-SAT 3DR cloud imagery sync: 04 minutes ago',
+        'Dam release: 220 m³/s — 4 gates at 0.8m height',
+        'Traffic advisory: NH-544 Coonoor Ghat closed due to landslide risk',
+        'PM2.5 levels improving in western corridor — 18 µg/m³'
+      ]
     };
 
     this.listeners = new Set();
@@ -88,6 +104,40 @@ class AppStore {
   setRegion(regionId) {
     this.state.selectedRegionId = regionId;
     this.notify('region_change', regionId);
+  }
+
+  setUIMode(mode) {
+    if (mode !== 'PUBLIC' && mode !== 'AUTHORITY') return;
+    this.state.uiMode = mode;
+    if (mode === 'PUBLIC') {
+      this.state.currentView = 'public';
+    } else if (mode === 'AUTHORITY') {
+      this.state.currentView = 'dashboard';
+    }
+    this.notify('ui_mode_change', mode);
+  }
+
+  setPublicLocation(locationOrId) {
+    let fullLoc = null;
+    const locId = typeof locationOrId === 'string' ? locationOrId : (locationOrId?.id || 'avinashi');
+    const matched = this.state.publicLocations.find(l => l.id.toLowerCase() === locId.toLowerCase());
+    
+    if (matched) {
+      fullLoc = typeof locationOrId === 'object' ? { ...matched, ...locationOrId } : { ...matched };
+    } else if (typeof locationOrId === 'object') {
+      fullLoc = locationOrId;
+    } else {
+      fullLoc = this.state.publicLocations[0];
+    }
+
+    this.state.selectedPublicLocation = fullLoc;
+    
+    // Also sync selectedRegionId for map consistency
+    const matchingRegion = REGIONS.find(r => r.id === fullLoc.id);
+    if (matchingRegion) {
+      this.state.selectedRegionId = fullLoc.id;
+    }
+    this.notify('public_location_change', fullLoc);
   }
 
   toggleLayer(layerKey) {

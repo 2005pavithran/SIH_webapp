@@ -1,4 +1,4 @@
-// Toast Notification Utility
+// Toast Notification Utility (Government Theme Standard)
 
 export function showToast(message, type = 'info', duration = 4000) {
   const container = document.getElementById('toast-container');
@@ -6,16 +6,17 @@ export function showToast(message, type = 'info', duration = 4000) {
 
   const toast = document.createElement('div');
   toast.className = `toast-item ${type === 'crit' || type === 'critical' ? 'crit' : ''}`;
+  toast.setAttribute('role', 'status');
 
   let icon = 'ℹ️';
   let title = 'System Notification';
 
   if (type === 'crit' || type === 'critical') {
     icon = '🚨';
-    title = 'CRITICAL DISASTER ALERT';
+    title = 'CRITICAL EMERGENCY ALERT';
   } else if (type === 'success') {
     icon = '✅';
-    title = 'Action Completed';
+    title = 'Action Verified';
   } else if (type === 'warning') {
     icon = '⚠️';
     title = 'Hazard Warning';
@@ -27,7 +28,7 @@ export function showToast(message, type = 'info', duration = 4000) {
       <div class="toast-title">${title}</div>
       <div class="toast-msg">${message}</div>
     </div>
-    <button class="toast-close" aria-label="Close">&times;</button>
+    <button class="toast-close" aria-label="Close Notification">&times;</button>
   `;
 
   const closeBtn = toast.querySelector('.toast-close');

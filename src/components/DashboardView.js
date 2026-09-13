@@ -1,9 +1,10 @@
-// Dashboard View Component (Primary Command Center Demo Screen)
+// Dashboard View Component (Primary Command Center Screen)
 
 import { store } from '../state/store.js';
 import { createGISMap } from './LiveMapGIS.js';
 import { simulationEngine } from '../state/simulation.js';
 import { getRiskClass, getHazardIcon } from '../utils/formatters.js';
+import { createAnnouncementBanner } from './AnnouncementBanner.js';
 
 export function createDashboardView() {
   const container = document.createElement('div');
@@ -15,139 +16,169 @@ export function createDashboardView() {
     const state = store.getState();
 
     container.innerHTML = `
-      <!-- Simulation & Demo Control Bar -->
+      <!-- Container for announcement banner -->
+      <div id="dashboard-banner-slot"></div>
+
+      <!-- Simulation Scenario Control Bar -->
       <div class="scenario-bar">
-        <div class="scenario-info">
-          <span class="scenario-badge">SIH DEMO MODE</span>
-          <span>Test live multi-hazard early warning & response workflows:</span>
+        <div class="scenario-info-text">
+          <span class="scenario-tag">SIH DEMONSTRATION MODE</span>
+          <span>Inject live multi-hazard early warning & disaster response scenarios:</span>
         </div>
-        <div class="scenario-actions">
+        <div class="scenario-btn-group">
+          <button class="btn-scenario ${state.activeScenario === 'avinashi_flood' ? 'active' : ''}" id="demo-avinashi-btn" title="Simulate Coimbatore cloudburst causing downstream flood in Avinashi">
+            🌊 Coimbatore → Avinashi Flood Demo
+          </button>
           <button class="btn-scenario ${state.activeScenario === 'flood' ? 'active' : ''}" id="demo-flood-btn">
-            🌊 Trigger Flash Flood Surge
+            🌊 Flash Flood Surge (Dist. X)
           </button>
           <button class="btn-scenario ${state.activeScenario === 'fire' ? 'active' : ''}" id="demo-fire-btn">
-            🔥 Trigger Forest Fire Outbreak
+            🔥 Forest Fire (Zone Y)
           </button>
           <button class="btn-scenario ${state.activeScenario === 'baseline' ? 'active' : ''}" id="demo-reset-btn">
-            🔄 Reset to Nominal Baseline
+            🔄 Reset Baseline
           </button>
         </div>
       </div>
 
       <!-- View Header -->
-      <div class="view-header">
-        <div class="view-title-group">
-          <h1>
-            <span>GOOD EVENING, AUTHORITY</span>
-            <span class="risk-badge critical" style="font-size: 12px; margin-left: 8px;">MONITORING ACTIVE</span>
+      <div class="view-header-row">
+        <div>
+          <h1 class="view-title-main">
+            <span>COMMAND CENTER & SITUATIONAL OVERVIEW</span>
+            <span class="status-badge success">SYSTEM NORMAL • 96.8% UPTIME</span>
           </h1>
-          <p>Real-time multi-hazard environmental situation across monitored regions and catchment basins</p>
+          <p class="view-desc-sub">Real-time multi-hazard telemetry, AI predictive risk trajectories, and field deployment status across catchment basins</p>
         </div>
-        <div class="view-actions">
+        <div class="view-actions-group">
           <button class="btn-secondary" id="btn-export-brief">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
             </svg>
-            <span>Export Situation Brief</span>
+            <span>Situation Brief</span>
           </button>
           <button class="btn-primary" id="btn-create-incident">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            <span>Log Emergency Incident</span>
+            <span>Log Incident</span>
           </button>
         </div>
       </div>
 
-      <!-- Top Statistics 4-Card Grid -->
+      <!-- Quick Access Action Pills -->
+      <div class="quick-access-bar">
+        <span style="font-size: 11px; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase;">Quick Actions:</span>
+        <button class="quick-action-pill" onclick="window.appStore.setView('risk-map')">🗺️ Explore Risk Map</button>
+        <button class="quick-action-pill" onclick="window.appStore.setView('alerts')">🚨 Review 12 Alerts</button>
+        <button class="quick-action-pill" onclick="window.drawerManager.openAIDrawer('Flood')">🤖 AI Prediction Model</button>
+        <button class="quick-action-pill" onclick="window.appStore.setView('analytics')">📊 Environmental Analytics</button>
+        <button class="quick-action-pill" onclick="window.drawerManager.openStaffDrawer()">🛡️ Operational Directory</button>
+      </div>
+
+      <!-- 4 Compact KPI Metric Cards -->
       <div class="dashboard-kpi-grid">
-        <div class="kpi-card success" style="cursor: pointer;" id="kpi-sensors-card">
-          <div class="kpi-header">
-            <span class="kpi-title">📡 SENSORS</span>
-            <div class="kpi-icon">📶</div>
+        <div class="kpi-card" id="kpi-sensors-card" title="Click to view full sensor telemetry table">
+          <div class="kpi-card-top">
+            <span class="kpi-label">📡 SENSOR MESH</span>
+            <div class="kpi-icon-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"></path><circle cx="12" cy="12" r="2"></circle><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"></path></svg>
+            </div>
           </div>
           <div class="kpi-value-row">
-            <span class="kpi-value" id="kpi-sensors-val">${state.kpi.totalSensors.toLocaleString()}</span>
-            <span class="kpi-delta positive">98.4% Health</span>
+            <span class="kpi-numeric-val" id="kpi-sensors-val">${state.kpi.totalSensors.toLocaleString()}</span>
+            <span class="kpi-delta-tag positive">98.4% Health</span>
           </div>
-          <div class="kpi-subtitle">${state.kpi.onlineSensors.toLocaleString()} Online • 29 Degraded • 12 Offline</div>
+          <div class="kpi-subtext">${state.kpi.onlineSensors.toLocaleString()} Online • 29 Degraded • 12 Offline</div>
         </div>
 
-        <div class="kpi-card warning" style="cursor: pointer;" id="kpi-alerts-card">
-          <div class="kpi-header">
-            <span class="kpi-title">🚨 ALERTS</span>
-            <div class="kpi-icon">⚡</div>
+        <div class="kpi-card" id="kpi-alerts-card" title="Click to view alert center">
+          <div class="kpi-card-top">
+            <span class="kpi-label">🚨 ACTIVE ALERTS</span>
+            <div class="kpi-icon-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            </div>
           </div>
           <div class="kpi-value-row">
-            <span class="kpi-value" id="kpi-alerts-val">${state.alerts.length}</span>
-            <span class="kpi-delta negative">+3 past hr</span>
+            <span class="kpi-numeric-val" id="kpi-alerts-val">${state.alerts.length}</span>
+            <span class="kpi-delta-tag warning">+3 past hr</span>
           </div>
-          <div class="kpi-subtitle">${state.alerts.filter(a => a.severity === 'Critical').length} Critical • ${state.alerts.filter(a => a.severity === 'Warning').length} Warning</div>
+          <div class="kpi-subtext">${state.alerts.filter(a => a.severity === 'Critical').length} Critical • ${state.alerts.filter(a => a.severity === 'Warning').length} Warning</div>
         </div>
 
-        <div class="kpi-card crit" style="cursor: pointer;" id="kpi-crit-card">
-          <div class="kpi-header">
-            <span class="kpi-title">🔴 CRITICAL</span>
-            <div class="kpi-icon">⚠️</div>
+        <div class="kpi-card" id="kpi-crit-card" title="Click to view incidents">
+          <div class="kpi-card-top">
+            <span class="kpi-label">🔴 CRITICAL HAZARDS</span>
+            <div class="kpi-icon-wrap" style="color: var(--color-critical);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>
+            </div>
           </div>
           <div class="kpi-value-row">
-            <span class="kpi-value" id="kpi-crit-val">${state.kpi.criticalIncidents < 10 ? '0' + state.kpi.criticalIncidents : state.kpi.criticalIncidents}</span>
-            <span class="kpi-delta negative">Immediate Action</span>
+            <span class="kpi-numeric-val" style="color: var(--color-critical);" id="kpi-crit-val">${state.kpi.criticalIncidents < 10 ? '0' + state.kpi.criticalIncidents : state.kpi.criticalIncidents}</span>
+            <span class="kpi-delta-tag critical">Action Required</span>
           </div>
-          <div class="kpi-subtitle">Flash Flood #FLD-042 & Fire #FIR-019</div>
+          <div class="kpi-subtext">Flash Flood #FLD-042 & Wildfire #FIR-019</div>
         </div>
 
-        <div class="kpi-card" style="cursor: pointer;" id="kpi-uptime-card">
-          <div class="kpi-header">
-            <span class="kpi-title">🟢 SYSTEM</span>
-            <div class="kpi-icon">🛡️</div>
+        <div class="kpi-card" id="kpi-uptime-card" title="Click to view system settings">
+          <div class="kpi-card-top">
+            <span class="kpi-label">🛡️ SYSTEM UPTIME</span>
+            <div class="kpi-icon-wrap" style="color: var(--color-success);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
           </div>
           <div class="kpi-value-row">
-            <span class="kpi-value" id="kpi-uptime-val">${state.kpi.uptime}%</span>
-            <span class="kpi-delta positive">Telemetry Latency ${state.kpi.latencyMs}ms</span>
+            <span class="kpi-numeric-val" id="kpi-uptime-val">${state.kpi.uptime}%</span>
+            <span class="kpi-delta-tag positive">${state.kpi.latencyMs}ms Latency</span>
           </div>
-          <div class="kpi-subtitle">Fault-tolerant edge mesh active</div>
+          <div class="kpi-subtext">LoRaWAN Edge Mesh Synchronized</div>
         </div>
       </div>
 
-      <!-- Main Command Grid: Live GIS Map + Active Alerts -->
+      <!-- Main Command Grid: Live GIS Map + Active Alerts Feed -->
       <div class="dashboard-main-grid">
-        <!-- Live GIS Map Card -->
-        <div class="command-card">
-          <div class="command-card-header">
-            <div class="command-card-title">
-              <span>🗺️ LIVE GIS SITUATIONAL MAP</span>
-              <span class="live-pulse-badge" style="padding: 2px 8px; font-size: 10px;">REAL-TIME</span>
+        <!-- Live Map Card -->
+        <div class="gov-card">
+          <div class="gov-card-header">
+            <div class="gov-card-title">
+              <span>🗺️ Live GIS Situational Map</span>
+              <span class="status-badge success" style="font-size: 10px;">REAL-TIME</span>
             </div>
             <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" id="btn-fullscreen-map">
-              <span>Full Screen Map</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
-              </svg>
+              <span>Full Screen</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
             </button>
           </div>
 
           <div style="height: 440px; position: relative;">
-            <!-- Map Floating Toolbar -->
+            <!-- Map Floating Controls -->
             <div class="map-floating-controls">
               <div class="map-search-box">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <input type="text" id="map-search-input" placeholder="Search location, hazard or node...">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="map-search-input" placeholder="Search node, hazard or basin...">
               </div>
 
-              <div class="map-layer-pills">
-                <button class="layer-btn fire ${state.mapLayers.fire ? 'active' : ''}" data-layer="fire">🔥 Fire</button>
-                <button class="layer-btn flood ${state.mapLayers.flood ? 'active' : ''}" data-layer="flood">🌊 Flood</button>
-                <button class="layer-btn air ${state.mapLayers.air ? 'active' : ''}" data-layer="air">🌫 Air</button>
-                <button class="layer-btn heat ${state.mapLayers.heat ? 'active' : ''}" data-layer="heat">🌡 Heat</button>
-                <button class="layer-btn water ${state.mapLayers.sensors ? 'active' : ''}" data-layer="sensors">💧 Nodes</button>
-                <button class="layer-btn ${state.mapLayers.teams ? 'active' : ''}" data-layer="teams">🚑 Teams</button>
+              <div class="map-control-actions">
+                <div class="map-basemap-select-wrap">
+                  <select id="map-basemap-select" title="Change Base Map Layer">
+                    <option value="osm" selected>🗺️ Street Map</option>
+                    <option value="cartoLight">🏙️ Carto Light</option>
+                    <option value="satellite">🛰️ Satellite</option>
+                    <option value="topo">⛰️ Topographic</option>
+                  </select>
+                </div>
+
+                <div class="map-layer-pills">
+                  <button class="layer-btn flood ${state.mapLayers.flood ? 'active' : ''}" data-layer="flood">🌊 Flood</button>
+                  <button class="layer-btn fire ${state.mapLayers.fire ? 'active' : ''}" data-layer="fire">🔥 Fire</button>
+                  <button class="layer-btn air ${state.mapLayers.air ? 'active' : ''}" data-layer="air">🌫 Air</button>
+                  <button class="layer-btn heat ${state.mapLayers.heat ? 'active' : ''}" data-layer="heat">🌡 Heat</button>
+                  <button class="layer-btn ${state.mapLayers.sensors ? 'active' : ''}" data-layer="sensors">📡 Nodes</button>
+                  <button class="layer-btn ${state.mapLayers.teams ? 'active' : ''}" data-layer="teams">🚑 Teams</button>
+                </div>
               </div>
             </div>
 
@@ -156,7 +187,7 @@ export function createDashboardView() {
 
             <!-- Map Legend -->
             <div class="map-legend-overlay">
-              <div class="legend-title">Risk Levels</div>
+              <div class="legend-title">Risk Severity</div>
               <div class="legend-items">
                 <div class="legend-item"><div class="legend-dot low"></div> Low</div>
                 <div class="legend-item"><div class="legend-dot mod"></div> Moderate</div>
@@ -167,40 +198,40 @@ export function createDashboardView() {
           </div>
         </div>
 
-        <!-- Active Alerts Feed Card -->
-        <div class="command-card">
-          <div class="command-card-header">
-            <div class="command-card-title">
-              <span>🚨 ACTIVE ALERTS</span>
-              <span class="risk-badge critical" style="font-size: 11px;">${state.alerts.length} OPEN</span>
+        <!-- Critical Alerts Feed Card -->
+        <div class="gov-card">
+          <div class="gov-card-header">
+            <div class="gov-card-title">
+              <span>🚨 Critical & Active Alerts</span>
+              <span class="status-badge critical" style="font-size: 11px;">${state.alerts.length} OPEN</span>
             </div>
             <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" id="btn-view-all-alerts">
-              <span>View all alerts</span>
+              <span>View All</span>
             </button>
           </div>
 
-          <div class="command-card-body">
-            <div class="alerts-list-container" id="dashboard-alerts-feed">
+          <div class="gov-card-body" style="padding: 14px;">
+            <div class="alerts-feed-scroller" id="dashboard-alerts-feed">
               ${state.alerts.map(alert => {
                 const riskCls = getRiskClass(alert.severity);
                 return `
-                  <div class="alert-feed-item ${riskCls}" data-alert-id="${alert.id}">
-                    <div class="alert-feed-content">
-                      <div class="alert-feed-header">
-                        <span class="risk-badge ${riskCls}">${alert.severity}</span>
-                        <span class="alert-feed-title">${getHazardIcon(alert.hazard)} ${alert.hazard} Risk</span>
+                  <div class="alert-card-item ${riskCls}" data-alert-id="${alert.id}">
+                    <div class="alert-card-body">
+                      <div class="alert-card-header">
+                        <span class="status-badge ${riskCls}">${alert.severity}</span>
+                        <span class="alert-card-title">${alert.hazard} Risk</span>
                         <span class="ai-confidence-pill">AI ${alert.aiConfidence}%</span>
                       </div>
-                      <div style="font-size: 12px; color: #f1f5f9; font-weight: 500;">${alert.title}</div>
-                      <div class="alert-feed-meta">
-                        <span>${alert.location}</span>
+                      <div style="font-size: 12px; color: var(--color-text-primary); font-weight: 600;">${alert.title}</div>
+                      <div class="alert-card-meta">
+                        <span>📍 ${alert.location}</span>
                         <span>•</span>
-                        <span>${alert.timeAgo}</span>
+                        <span>⏱️ ${alert.timeAgo}</span>
                       </div>
                     </div>
-                    <div class="alert-feed-action">
-                      <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="window.appStore.openAlertModal('${alert.id}')">
-                        VIEW
+                    <div class="alert-card-actions">
+                      <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="window.drawerManager.openAlertDrawer('${alert.id}')">
+                        DETAILS
                       </button>
                     </div>
                   </div>
@@ -211,97 +242,86 @@ export function createDashboardView() {
         </div>
       </div>
 
-      <!-- Bottom Command Grid: Risk Trend & AI Prediction Widget -->
+      <!-- Bottom Grid: Hydro-Meteorological Trend + Recent Emergency Incidents -->
       <div class="dashboard-bottom-grid">
-        <!-- Risk Trend Visualization Card -->
-        <div class="command-card">
-          <div class="command-card-header">
-            <div class="command-card-title">
-              <span>📈 HYDRO-METEOROLOGICAL RISK TREND</span>
-              <span class="risk-trend-tag">↗ Accelerating Inflow</span>
+        <!-- Hydro-Meteorological Trend Chart Card -->
+        <div class="gov-card">
+          <div class="gov-card-header">
+            <div class="gov-card-title">
+              <span>📈 Hydro-Meteorological Inflow Trend</span>
             </div>
-            <div class="filter-select-item">
-              <select id="trend-timeframe">
-                <option value="24h">Past 24 Hours</option>
-                <option value="7d">Past 7 Days</option>
-              </select>
-            </div>
+            <span class="status-badge critical" style="font-size: 11px;">DANGER THRESHOLD: 3.20m</span>
           </div>
 
-          <div class="command-card-body">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 12px;">
-              <div style="color: var(--text-muted);">Gorge Catchment Water Level vs Red Danger Level (3.2m)</div>
-              <div style="font-family: var(--font-mono); color: var(--risk-crit); font-weight: 700;">Peak Runoff: 3.84m (CRITICAL)</div>
+          <div class="gov-card-body">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 12px;">
+              <span style="color: var(--color-text-secondary);">Vythiri Catchment Inundation vs Safe Operating Band</span>
+              <strong style="color: var(--color-critical); font-family: var(--font-mono);">Peak Runoff: 3.84m (CRITICAL)</strong>
             </div>
-            <div style="height: 180px; position: relative;">
+            <div style="height: 190px; position: relative;">
               <canvas id="dashboard-trend-chart"></canvas>
             </div>
           </div>
         </div>
 
-        <!-- AI Risk Intelligence & Explainability Card -->
-        <div class="command-card">
-          <div class="command-card-header">
-            <div class="command-card-title">
-              <span>🤖 AI RISK INTELLIGENCE & XAI</span>
-              <span class="ai-confidence-pill">DEEP SHAP</span>
+        <!-- Recent Emergency Incidents Card -->
+        <div class="gov-card">
+          <div class="gov-card-header">
+            <div class="gov-card-title">
+              <span>🚑 Recent Emergency Incidents</span>
             </div>
-            <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" id="btn-deep-ai-view">
-              <span>Explain Model</span>
+            <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="window.appStore.setView('incidents')">
+              <span>View All SOPs</span>
             </button>
           </div>
 
-          <div class="command-card-body">
-            <div class="ai-prediction-card">
-              <div class="ai-hero-box">
-                <div class="ai-hero-hazard">
-                  <div class="hazard-icon-circle">🌊</div>
-                  <div>
-                    <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Target Threat</div>
-                    <div style="font-size: 16px; font-weight: 800; color: #fff;">${state.aiPrediction.hazard} Hazard</div>
-                  </div>
-                </div>
+          <div class="gov-card-body" style="padding: 14px;">
+            <div class="incidents-mini-list">
+              ${state.incidents.map(inc => {
+                const completedCount = inc.sop.filter(s => s.done).length;
+                const totalCount = inc.sop.length;
+                const percent = Math.round((completedCount / totalCount) * 100);
 
-                <div class="ai-risk-score-display">
-                  <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Confidence Index</div>
-                  <div class="ai-risk-percent">${state.aiPrediction.riskScore}%</div>
-                  <span class="risk-badge ${getRiskClass(state.aiPrediction.riskLevel)}" style="font-size: 10px; padding: 2px 6px;">
-                    ${state.aiPrediction.riskLevel}
-                  </span>
-                </div>
-              </div>
-
-              <div class="ai-prediction-summary">
-                <span>🔮</span>
-                <div>${state.aiPrediction.predictionText}</div>
-              </div>
-
-              <div class="attribution-factors">
-                <div style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;">
-                  Explainable AI Factor Attribution (Weights):
-                </div>
-                ${state.aiPrediction.factors.map(factor => `
-                  <div class="factor-item">
-                    <div class="factor-meta">
-                      <span class="factor-name">${factor.name}</span>
-                      <span class="factor-val">${factor.value} (${factor.weight}%)</span>
+                return `
+                  <div class="incident-mini-card">
+                    <div class="incident-mini-left">
+                      <div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                          <span class="incident-mini-id">#${inc.id}</span>
+                          <span class="status-badge ${getRiskClass(inc.severity)}">${inc.severity}</span>
+                          <span class="incident-mini-title">${inc.title}</span>
+                        </div>
+                        <div class="incident-mini-sub">
+                          <span>${inc.location} • Assigned: <strong>${inc.assignedTeam || 'Pending'}</strong></span>
+                        </div>
+                      </div>
                     </div>
-                    <div class="factor-bar-bg">
-                      <div class="factor-bar-fill ${factor.impact === 'critical' ? 'crit' : ''}" style="width: ${factor.weight * 2.5}%;"></div>
+                    <div style="text-align: right;">
+                      <div style="font-size: 11px; font-weight: 700; color: var(--color-primary); font-family: var(--font-mono);">${completedCount}/${totalCount} SOP (${percent}%)</div>
+                      <button class="btn-secondary" style="padding: 3px 8px; font-size: 11px; margin-top: 4px;" onclick="window.appStore.setView('incidents')">
+                        Manage
+                      </button>
                     </div>
                   </div>
-                `).join('')}
-              </div>
+                `;
+              }).join('')}
             </div>
           </div>
         </div>
       </div>
     `;
 
+    // Render Announcement Banner in Slot
+    const bannerSlot = container.querySelector('#dashboard-banner-slot');
+    if (bannerSlot) {
+      const banner = createAnnouncementBanner();
+      bannerSlot.appendChild(banner);
+    }
+
     // Attach Event Handlers
     attachEventListeners();
 
-    // Initialize Leaflet Map
+    // Initialize Map & Trend Chart
     setTimeout(() => {
       const mapEl = container.querySelector('#dashboard-gis-map');
       if (mapEl) {
@@ -313,20 +333,24 @@ export function createDashboardView() {
   }
 
   function attachEventListeners() {
-    // Demo Scenario Injector buttons
-    container.querySelector('#demo-flood-btn').addEventListener('click', () => {
+    // Scenario buttons
+    container.querySelector('#demo-avinashi-btn')?.addEventListener('click', () => {
+      simulationEngine.triggerAvinashiFloodScenario();
+    });
+
+    container.querySelector('#demo-flood-btn')?.addEventListener('click', () => {
       simulationEngine.triggerFlashFloodScenario();
     });
 
-    container.querySelector('#demo-fire-btn').addEventListener('click', () => {
+    container.querySelector('#demo-fire-btn')?.addEventListener('click', () => {
       simulationEngine.triggerWildfireScenario();
     });
 
-    container.querySelector('#demo-reset-btn').addEventListener('click', () => {
+    container.querySelector('#demo-reset-btn')?.addEventListener('click', () => {
       simulationEngine.resetBaselineScenario();
     });
 
-    // KPI Card Click jumps
+    // KPI Clicks
     container.querySelector('#kpi-sensors-card').addEventListener('click', () => store.setView('sensors'));
     container.querySelector('#kpi-alerts-card').addEventListener('click', () => store.setView('alerts'));
     container.querySelector('#kpi-crit-card').addEventListener('click', () => store.setView('incidents'));
@@ -334,12 +358,11 @@ export function createDashboardView() {
 
     // Navigation jumps
     container.querySelector('#btn-view-all-alerts').addEventListener('click', () => store.setView('alerts'));
-    container.querySelector('#btn-fullscreen-map').addEventListener('click', () => store.setView('live-map'));
-    container.querySelector('#btn-deep-ai-view').addEventListener('click', () => store.setView('ai-prediction'));
-    container.querySelector('#btn-export-brief').addEventListener('click', () => store.setView('reports'));
+    container.querySelector('#btn-fullscreen-map').addEventListener('click', () => store.setView('risk-map'));
+    container.querySelector('#btn-export-brief').addEventListener('click', () => store.setView('analytics'));
     container.querySelector('#btn-create-incident').addEventListener('click', () => store.setView('incidents'));
 
-    // Map Layer Toggles
+    // Map layer buttons
     container.querySelectorAll('.layer-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const layerKey = btn.getAttribute('data-layer');
@@ -349,7 +372,7 @@ export function createDashboardView() {
       });
     });
 
-    // Map Search
+    // Map search input
     const searchInput = container.querySelector('#map-search-input');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
@@ -363,6 +386,16 @@ export function createDashboardView() {
         }
       });
     }
+
+    // Basemap select change
+    const basemapSelect = container.querySelector('#map-basemap-select');
+    if (basemapSelect) {
+      basemapSelect.addEventListener('change', (e) => {
+        if (gisInstance) {
+          gisInstance.setBasemap(e.target.value);
+        }
+      });
+    }
   }
 
   function initTrendChart() {
@@ -371,15 +404,14 @@ export function createDashboardView() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Draw clean custom HTML5 Canvas Chart with glowing line
     const width = canvas.parentElement.clientWidth;
-    const height = 180;
+    const height = 190;
     canvas.width = width;
     canvas.height = height;
 
     const labels = ['14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00 (Now)', '21:00 (FC)', '22:00 (FC)'];
     const data = [1.2, 1.4, 1.8, 2.3, 2.9, 3.4, 3.84, 4.12, 4.35];
-    const threshold = 3.2; // Red danger level
+    const threshold = 3.2; // Danger level (3.2m)
 
     const padding = { top: 20, right: 30, bottom: 30, left: 40 };
     const chartW = width - padding.left - padding.right;
@@ -388,16 +420,16 @@ export function createDashboardView() {
     const maxVal = 5.0;
     const minVal = 0.0;
 
-    const getX = (index) => padding.left + (index / (labels.length - 1)) * chartW;
-    const getY = (val) => padding.top + chartH - ((val - minVal) / (maxVal - minVal)) * chartH;
+    const getX = (i) => padding.left + (i / (labels.length - 1)) * chartW;
+    const getY = (v) => padding.top + chartH - ((v - minVal) / (maxVal - minVal)) * chartH;
 
     ctx.clearRect(0, 0, width, height);
 
     // Grid lines & Y labels
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+    ctx.strokeStyle = '#E8EEF3';
     ctx.lineWidth = 1;
-    ctx.fillStyle = '#64748b';
-    ctx.font = '10px JetBrains Mono';
+    ctx.fillStyle = '#7B8794';
+    ctx.font = '10px JetBrains Mono, monospace';
     ctx.textAlign = 'right';
 
     [1, 2, 3, 4, 5].forEach(v => {
@@ -409,23 +441,24 @@ export function createDashboardView() {
       ctx.fillText(`${v}m`, padding.left - 8, y + 3);
     });
 
-    // Danger threshold line (3.2m)
+    // Danger Threshold Line (3.2m)
     const dangerY = getY(threshold);
-    ctx.strokeStyle = 'rgba(239, 68, 68, 0.6)';
+    ctx.strokeStyle = '#B42318';
+    ctx.lineWidth = 1.5;
     ctx.setLineDash([5, 5]);
     ctx.beginPath();
     ctx.moveTo(padding.left, dangerY);
     ctx.lineTo(width - padding.right, dangerY);
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = '#ef4444';
+    ctx.fillStyle = '#B42318';
     ctx.fillText('DANGER (3.2m)', width - padding.right, dangerY - 6);
 
-    // Gradient area fill under curve
+    // Gradient fill under curve
     const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
-    gradient.addColorStop(0, 'rgba(239, 68, 68, 0.35)');
-    gradient.addColorStop(0.7, 'rgba(59, 130, 246, 0.15)');
-    gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+    gradient.addColorStop(0, 'rgba(180, 35, 24, 0.15)');
+    gradient.addColorStop(0.6, 'rgba(30, 77, 120, 0.08)');
+    gradient.addColorStop(1, 'rgba(30, 77, 120, 0.0)');
 
     ctx.beginPath();
     ctx.moveTo(getX(0), getY(data[0]));
@@ -441,9 +474,9 @@ export function createDashboardView() {
     ctx.fillStyle = gradient;
     ctx.fill();
 
-    // Line curve stroke
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 3;
+    // Curve Line
+    ctx.strokeStyle = '#B42318';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(getX(0), getY(data[0]));
     for (let i = 1; i < data.length; i++) {
@@ -454,33 +487,36 @@ export function createDashboardView() {
     ctx.lineTo(getX(data.length - 1), getY(data[data.length - 1]));
     ctx.stroke();
 
-    // Data points & X labels
+    // Points & X labels
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#94a3b8';
-
     data.forEach((val, i) => {
       const x = getX(i);
       const y = getY(val);
 
-      ctx.fillStyle = val >= threshold ? '#ef4444' : '#3b82f6';
+      ctx.fillStyle = val >= threshold ? '#B42318' : '#1E4D78';
       ctx.beginPath();
-      ctx.arc(x, y, i >= 6 ? 5 : 4, 0, Math.PI * 2);
+      ctx.arc(x, y, i === 6 ? 5 : 3.5, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = '#fff';
+      ctx.strokeStyle = '#FFFFFF';
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // X Label
-      ctx.fillStyle = i === 6 ? '#f8fafc' : '#64748b';
+      ctx.fillStyle = i === 6 ? '#17212B' : '#7B8794';
       ctx.font = i === 6 ? 'bold 10px Inter' : '10px Inter';
       ctx.fillText(labels[i], x, height - 10);
     });
   }
 
+  // Handle responsive chart resizing
+  const onResizeChart = () => {
+    initTrendChart();
+  };
+  window.addEventListener('resize', onResizeChart);
+
   render();
 
-  // Listen to store updates
-  store.subscribe((state, event) => {
+  // Reactive store updates
+  const unsubscribe = store.subscribe((state, event) => {
     if (event === 'telemetry_tick' || event === 'new_alert' || event === 'sop_update') {
       const kpiSensors = container.querySelector('#kpi-sensors-val');
       const kpiAlerts = container.querySelector('#kpi-alerts-val');
@@ -499,7 +535,9 @@ export function createDashboardView() {
   return {
     element: container,
     destroy: () => {
+      window.removeEventListener('resize', onResizeChart);
       if (gisInstance) gisInstance.destroy();
+      unsubscribe();
     }
   };
 }

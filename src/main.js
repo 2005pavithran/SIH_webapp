@@ -5,6 +5,7 @@ import { simulationEngine } from './state/simulation.js';
 import { createTopNav } from './components/TopNav.js';
 import { createSidebar } from './components/Sidebar.js';
 import { initModalManager } from './components/ModalManager.js';
+import { drawerManager } from './components/DrawerManager.js';
 
 // View Creators
 import { createDashboardView } from './components/DashboardView.js';
@@ -15,11 +16,13 @@ import { createAIPredictionView } from './components/AIPrediction.js';
 import { createSensorNetworkView } from './components/SensorNetwork.js';
 import { createAnalyticsView } from './components/AnalyticsView.js';
 import { createIncidentManagerView } from './components/IncidentManager.js';
-import { createReportGeneratorView } from './components/ReportGenerator.js';
+import { createStaffServicesView } from './components/StaffServicesView.js';
 import { createSystemSettingsView } from './components/SystemSettings.js';
+import { createPublicPortalView } from './components/PublicPortalView.js';
 
-// Expose store globally for inline onclicks in Leaflet popups
+// Expose store and drawer globally for inline onclicks & Leaflet popups
 window.appStore = store;
+window.drawerManager = drawerManager;
 
 class CommandPortalApp {
   constructor() {
@@ -46,15 +49,20 @@ class CommandPortalApp {
     this.appRoot.appendChild(topNav);
     this.appRoot.appendChild(appBody);
 
-    // 2. Initialize Modal Controller
+    // 2. Initialize Modal & Drawer Controllers
     initModalManager();
+    drawerManager.init();
 
     // 3. Render Default View
     this.renderCurrentView();
 
     // 4. Listen to View Transitions
     store.subscribe((state, event, payload) => {
-      if (event === 'view_change') {
+      if (event === 'view_change' || event === 'ui_mode_change') {
+        const bodyEl = document.querySelector('.app-body');
+        if (bodyEl) {
+          bodyEl.classList.toggle('mode-public', state.uiMode === 'PUBLIC');
+        }
         this.renderCurrentView();
       }
     });
@@ -75,33 +83,40 @@ class CommandPortalApp {
     const currentView = store.getState().currentView;
 
     switch (currentView) {
+      case 'public':
+        this.currentViewInstance = createPublicPortalView();
+        break;
       case 'dashboard':
         this.currentViewInstance = createDashboardView();
         break;
+      case 'risk-map':
       case 'live-map':
         this.currentViewInstance = createLiveMapGISView();
         break;
-      case 'risk-map':
+      case 'dynamic-risk':
         this.currentViewInstance = createRiskMapDynamic();
         break;
       case 'alerts':
         this.currentViewInstance = createAlertCenter();
         break;
-      case 'ai-prediction':
-        this.currentViewInstance = createAIPredictionView();
-        break;
       case 'sensors':
         this.currentViewInstance = createSensorNetworkView();
-        break;
-      case 'analytics':
-        this.currentViewInstance = createAnalyticsView();
         break;
       case 'incidents':
       case 'teams':
         this.currentViewInstance = createIncidentManagerView();
         break;
+      case 'analytics':
+        this.currentViewInstance = createAnalyticsView('analytics');
+        break;
       case 'reports':
-        this.currentViewInstance = createReportGeneratorView();
+        this.currentViewInstance = createAnalyticsView('reports');
+        break;
+      case 'staff-services':
+        this.currentViewInstance = createStaffServicesView();
+        break;
+      case 'ai-prediction':
+        this.currentViewInstance = createAIPredictionView();
         break;
       case 'settings':
         this.currentViewInstance = createSystemSettingsView();
