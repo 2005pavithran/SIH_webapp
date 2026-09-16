@@ -1,154 +1,254 @@
 /* ==========================================================================
-   NATIONAL ENVIRONMENTAL INTELLIGENCE NETWORK — LANDING PAGE THEME
-   Dark Environmental Command Aesthetic • Deep #010604 • Emerald Accents
-   Glassmorphism • GIS HUD • Technical Elegance • Institutional Quality
+   NATIONAL ENVIRONMENTAL INTELLIGENCE NETWORK — PREMIUM LANDING THEME
+   Visual Direction: National Government + Mission Control + Geospatial Intelligence
+   Near-black #030706 • Atmospheric Emerald Gradients • Technical Grid • Micro-HUD
    ========================================================================== */
 
 :root {
-  --landing-bg: #010604;
-  --landing-bg-soft: #04120a;
-  --landing-bg-card: rgba(6, 26, 16, 0.7);
-  --landing-border: rgba(16, 185, 129, 0.18);
-  --landing-border-hover: rgba(52, 211, 153, 0.45);
+  --landing-bg: #030706;
+  --landing-bg-surface: rgba(255, 255, 255, 0.025);
+  --landing-bg-card: rgba(6, 18, 12, 0.72);
+  --landing-bg-card-hover: rgba(9, 28, 19, 0.88);
+  --landing-border: rgba(255, 255, 255, 0.075);
+  --landing-border-emerald: rgba(52, 211, 153, 0.18);
+  --landing-border-hover: rgba(52, 211, 153, 0.40);
+  
   --landing-emerald: #10b981;
   --landing-emerald-light: #34d399;
   --landing-emerald-dark: #059669;
-  --landing-glow: rgba(16, 185, 129, 0.25);
-  --landing-text-primary: #F0FDF4;
-  --landing-text-secondary: #94A3B8;
-  --landing-text-muted: #64748B;
-}
+  --landing-glow: rgba(16, 185, 129, 0.16);
 
-/* Base Landing Scroller */
-.landing-page-root {
-  width: 100%;
-  min-height: 100vh;
-  background-color: var(--landing-bg);
-  color: var(--landing-text-primary);
-  font-family: var(--font-sans);
-  position: relative;
-  overflow-x: hidden;
-  background-image: 
-    radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.12) 0%, transparent 60%),
-    radial-gradient(circle at 10% 40%, rgba(5, 150, 105, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 90% 70%, rgba(16, 185, 129, 0.06) 0%, transparent 40%),
-    radial-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 32px 32px;
+  --landing-text-primary: #f4f7f5;
+  --landing-text-secondary: #a7b3ad;
+  --landing-text-muted: #66756e;
+
+  --landing-radius-sm: 8px;
+  --landing-radius-md: 12px;
+  --landing-radius-lg: 18px;
+  --landing-radius-pill: 9999px;
+
+  --landing-section-gap: 110px;
+
+  /* Restrained Hazard Severity Palette */
+  --sev-normal: #10b981;
+  --sev-watch: #eab308;
+  --sev-warning: #f97316;
+  --sev-critical: #ef4444;
+  --sev-severe: #b91c1c;
 }
 
 /* ==========================================================================
-   BOOT ANIMATION CONTAINER (Phase 1 to 4)
+   1. BASE ROOT & SUBTLE TECHNICAL GRID
+   ========================================================================== */
+.landing-page-root {
+  position: relative;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.10), transparent 35%),
+    radial-gradient(circle at 15% 45%, rgba(5, 150, 105, 0.05), transparent 40%),
+    radial-gradient(circle at 85% 70%, rgba(16, 185, 129, 0.04), transparent 45%),
+    #030706;
+  color: var(--landing-text-primary);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.landing-page-root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+  z-index: 0;
+}
+
+/* Common Width System */
+.landing-content-width {
+  width: min(1440px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+@media (max-width: 1024px) {
+  .landing-content-width {
+    width: calc(100% - 32px);
+  }
+}
+
+@media (max-width: 640px) {
+  .landing-content-width {
+    width: calc(100% - 24px);
+  }
+}
+
+/* ==========================================================================
+   2. CINEMATIC HERO SECTION
    ========================================================================== */
 .boot-animation-hero {
-  width: 100%;
-  min-height: 92vh;
+  min-height: 780px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 24px 70px;
+  overflow: hidden;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .boot-animation-hero {
+    min-height: 720px;
+    padding: 40px 16px 50px;
+  }
+}
+
+/* Atmosphere Elements Behind Globe */
+.hero-atmosphere-glow {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 680px;
+  height: 680px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.04) 45%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-orbital-ring {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-15deg);
+  width: 620px;
+  height: 280px;
+  border-radius: 50%;
+  border: 1px dashed rgba(52, 211, 153, 0.18);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Technical Top HUD */
+.hero-hud-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  position: relative;
-  padding: 40px 24px 60px;
-  overflow: hidden;
+  gap: 10px;
+  margin-bottom: 20px;
+  z-index: 2;
 }
 
-.boot-status-hud {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 24px;
-  animation: hudPulse 3s ease-in-out infinite;
-}
-
-.hud-pill {
+.hud-pill-technical {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 16px;
+  padding: 5px 14px;
   background: rgba(16, 185, 129, 0.08);
-  border: 1px solid var(--landing-border);
-  border-radius: var(--radius-pill);
+  border: 1px solid var(--landing-border-emerald);
+  border-radius: var(--landing-radius-pill);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1.2px;
   text-transform: uppercase;
   color: var(--landing-emerald-light);
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.12);
 }
 
-.hud-dot {
-  width: 7px;
-  height: 7px;
+.hud-pulse-dot {
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--landing-emerald);
-  box-shadow: 0 0 10px var(--landing-emerald);
-  animation: blinkFast 1.2s infinite;
+  box-shadow: 0 0 8px var(--landing-emerald);
+  animation: hudPulseFast 1.5s infinite;
 }
 
-@keyframes blinkFast {
+@keyframes hudPulseFast {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.3; transform: scale(0.85); }
+  50% { opacity: 0.35; transform: scale(0.85); }
 }
 
-@keyframes hudPulse {
-  0%, 100% { opacity: 0.9; }
-  50% { opacity: 1; }
+.hero-hud-status-line {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--landing-text-muted);
+  letter-spacing: 0.8px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-/* 3D Earth Globe Canvas */
+.hero-hud-status-line span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hero-hud-status-line strong {
+  color: var(--landing-emerald-light);
+  font-weight: 600;
+}
+
+/* 3D Canvas Globe Container */
 .globe-canvas-wrapper {
-  width: 480px;
-  height: 480px;
-  max-width: 90vw;
-  max-height: 90vw;
   position: relative;
+  width: min(460px, 80vw);
+  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 10px 0 28px;
+  margin: 6px 0 22px;
+  z-index: 2;
+}
+
+@media (max-width: 640px) {
+  .globe-canvas-wrapper {
+    width: min(340px, 90vw);
+  }
 }
 
 .globe-canvas-element {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  box-shadow: 0 0 80px rgba(16, 185, 129, 0.25), inset 0 0 60px rgba(16, 185, 129, 0.3);
-  cursor: grab;
+  box-shadow: 0 0 60px rgba(16, 185, 129, 0.18), inset 0 0 40px rgba(16, 185, 129, 0.22);
 }
 
-.globe-canvas-element:active {
-  cursor: grabbing;
-}
-
+/* Hero Content Group */
 .hero-content-group {
   text-align: center;
-  max-width: 860px;
-  z-index: 10;
+  max-width: 880px;
+  z-index: 2;
 }
 
 .hero-main-title {
-  font-family: var(--font-display);
-  font-size: 42px;
+  font-family: var(--font-sans);
+  font-size: clamp(2.3rem, 4.8vw, 4.4rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
   font-weight: 800;
-  letter-spacing: -0.8px;
-  line-height: 1.15;
   color: #FFFFFF;
-  margin-bottom: 12px;
-  text-shadow: 0 2px 20px rgba(16, 185, 129, 0.3);
+  margin-bottom: 14px;
 }
 
-.hero-main-title span.emerald-gradient {
+.hero-main-title .emerald-gradient {
   background: linear-gradient(135deg, #34D399 0%, #10B981 50%, #059669 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .hero-subtitle {
-  font-size: 16px;
-  color: var(--landing-text-secondary);
-  line-height: 1.6;
   max-width: 720px;
-  margin: 0 auto 28px;
+  margin: 18px auto 0;
+  font-size: 1.02rem;
+  line-height: 1.68;
+  color: var(--landing-text-secondary);
 }
 
 .hero-cta-group {
@@ -156,6 +256,7 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
+  margin-top: 30px;
   flex-wrap: wrap;
 }
 
@@ -166,12 +267,12 @@
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #FFFFFF;
   font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 0.4px;
-  padding: 12px 28px;
-  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  letter-spacing: 0.3px;
+  padding: 13px 26px;
+  border-radius: var(--landing-radius-md);
   border: 1px solid rgba(52, 211, 153, 0.5);
-  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35);
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
@@ -179,7 +280,7 @@
 
 .btn-landing-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.6);
+  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.55);
   background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
 }
 
@@ -187,12 +288,12 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: rgba(6, 26, 16, 0.8);
-  color: var(--landing-emerald-light);
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--landing-text-primary);
   font-weight: 600;
-  font-size: 14px;
-  padding: 12px 24px;
-  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  padding: 13px 24px;
+  border-radius: var(--landing-radius-md);
   border: 1px solid var(--landing-border);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -200,45 +301,80 @@
 }
 
 .btn-landing-secondary:hover {
-  background: rgba(16, 185, 129, 0.12);
-  border-color: var(--landing-emerald-light);
-  color: #FFFFFF;
+  background: rgba(16, 185, 129, 0.08);
+  border-color: var(--landing-border-hover);
+  color: var(--landing-emerald-light);
+  transform: translateY(-2px);
+}
+
+/* Hero Network Telemetry Strip */
+.hero-network-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  margin-top: 36px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--landing-text-muted);
+  letter-spacing: 0.6px;
+  flex-wrap: wrap;
+}
+
+.hero-network-strip-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.hero-network-strip-item strong {
+  color: var(--landing-emerald-light);
+  font-weight: 600;
 }
 
 /* ==========================================================================
-   NATIONAL LANDING HEADER
+   3. STICKY NATIONAL HEADER (GOVERNMENT INTELLIGENCE STYLE)
    ========================================================================== */
 .national-header {
-  height: 72px;
-  background: rgba(1, 6, 4, 0.85);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--landing-border);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  min-height: 72px;
+  background: rgba(3, 7, 6, 0.82);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 32px;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+  transition: all 0.25s ease;
+}
+
+.national-header.scrolled {
+  background: rgba(3, 7, 6, 0.94);
+  backdrop-filter: blur(24px);
+  border-bottom-color: var(--landing-border-emerald);
+  min-height: 64px;
 }
 
 .national-header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .gov-emblem-badge {
-  width: 42px;
-  height: 42px;
-  background: linear-gradient(135deg, #064E3B 0%, #022C22 100%);
-  border: 1.5px solid var(--landing-emerald);
-  border-radius: var(--radius-md);
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.05) 100%);
+  border: 1px solid var(--landing-border-emerald);
+  border-radius: var(--landing-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+  color: var(--landing-emerald-light);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.15);
 }
 
 .national-title-group {
@@ -247,9 +383,8 @@
 }
 
 .national-brand-title {
-  font-family: var(--font-display);
   font-weight: 800;
-  font-size: 15px;
+  font-size: 14px;
   letter-spacing: 0.5px;
   color: #FFFFFF;
   line-height: 1.2;
@@ -266,14 +401,21 @@
 .national-header-nav {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 22px;
+}
+
+@media (max-width: 1080px) {
+  .national-header-nav {
+    display: none;
+  }
 }
 
 .nav-link-landing {
   color: var(--landing-text-secondary);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   text-decoration: none;
+  letter-spacing: 0.3px;
   transition: color 0.15s ease;
 }
 
@@ -284,19 +426,25 @@
 .national-header-right {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
 }
 
 .emergency-pill-landing {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--landing-text-secondary);
   background: rgba(16, 185, 129, 0.06);
   border: 1px solid var(--landing-border);
-  padding: 6px 14px;
-  border-radius: var(--radius-pill);
+  padding: 5px 12px;
+  border-radius: var(--landing-radius-pill);
+}
+
+@media (max-width: 768px) {
+  .emergency-pill-landing {
+    display: none;
+  }
 }
 
 .emergency-pill-landing strong {
@@ -305,17 +453,36 @@
 }
 
 /* ==========================================================================
-   LANDING SECTIONS COMMON
+   4. SECTION STRUCTURE & SPACING SYSTEM
    ========================================================================== */
 .landing-section {
-  padding: 60px 32px;
-  max-width: 1400px;
+  width: min(1440px, calc(100% - 48px));
   margin: 0 auto;
+  padding: 100px 0;
   position: relative;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-section.section-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.landing-section + .landing-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 768px) {
+  .landing-section {
+    width: calc(100% - 32px);
+    padding: 68px 0;
+  }
 }
 
 .landing-section-header {
-  margin-bottom: 36px;
+  margin-bottom: 38px;
   text-align: center;
 }
 
@@ -323,50 +490,53 @@
   display: inline-block;
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.6px;
   text-transform: uppercase;
   color: var(--landing-emerald);
   margin-bottom: 6px;
 }
 
 .landing-section-title {
-  font-family: var(--font-display);
-  font-size: 32px;
+  font-size: 30px;
   font-weight: 800;
   color: #FFFFFF;
   letter-spacing: -0.4px;
 }
 
 .landing-section-sub {
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--landing-text-secondary);
   margin-top: 6px;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* ==========================================================================
-   NATIONAL GIS RISK MAP SECTION
+   5. NATIONAL GIS RISK MAP CARD & OVERLAYS
    ========================================================================== */
 .gis-map-card-landing {
-  background: var(--landing-bg-card);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--landing-border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 30px rgba(16, 185, 129, 0.1);
   position: relative;
+  overflow: hidden;
+  border-radius: var(--landing-radius-lg);
+  background: rgba(7, 14, 11, 0.76);
+  border: 1px solid rgba(52, 211, 153, 0.14);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
 }
 
 .gis-map-header-landing {
-  padding: 16px 24px;
+  padding: 14px 22px;
   border-bottom: 1px solid var(--landing-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(1, 6, 4, 0.6);
+  background: rgba(3, 8, 5, 0.75);
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .gis-map-title-text {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #FFFFFF;
   display: flex;
@@ -376,100 +546,274 @@
   letter-spacing: 0.5px;
 }
 
+.gis-map-subtitle-text {
+  font-size: 11.5px;
+  color: var(--landing-text-muted);
+}
+
 #national-gis-map {
   width: 100%;
-  height: 540px;
+  height: 620px;
   background: #020b06;
 }
 
+@media (max-width: 1024px) {
+  #national-gis-map {
+    height: 520px;
+  }
+}
+
+@media (max-width: 640px) {
+  #national-gis-map {
+    height: 420px;
+  }
+}
+
+/* Map Helper Bottom-Left Overlay */
 .national-map-helper-badge {
   position: absolute;
-  top: 75px;
+  bottom: 24px;
   left: 24px;
-  background: rgba(1, 6, 4, 0.9);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--landing-border);
-  padding: 8px 14px;
-  border-radius: var(--radius-md);
-  font-size: 12px;
+  background: rgba(3, 8, 5, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--landing-border-emerald);
+  padding: 9px 14px;
+  border-radius: var(--landing-radius-md);
+  font-size: 11.5px;
   color: var(--landing-text-primary);
   z-index: 500;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  max-width: 320px;
+  line-height: 1.4;
+}
+
+.national-map-helper-badge strong {
+  display: block;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--landing-emerald-light);
+  margin-bottom: 2px;
+}
+
+/* Map Bottom Legend Overlay */
+.national-map-legend-bar {
+  position: absolute;
+  top: 70px;
+  right: 24px;
+  background: rgba(3, 8, 5, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--landing-border);
+  padding: 8px 14px;
+  border-radius: var(--landing-radius-md);
+  font-size: 11px;
+  color: var(--landing-text-secondary);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
+@media (max-width: 640px) {
+  .national-map-legend-bar {
+    display: none;
+  }
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+/* Restyled Dark Leaflet Popup */
+.leaflet-popup-content-wrapper {
+  background: rgba(4, 14, 9, 0.95) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid var(--landing-border-emerald) !important;
+  border-radius: var(--landing-radius-md) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7) !important;
+  color: #FFFFFF !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-content {
+  margin: 14px 16px !important;
+  line-height: 1.4 !important;
+}
+
+.leaflet-popup-tip {
+  background: rgba(4, 14, 9, 0.95) !important;
+  border: 1px solid var(--landing-border-emerald) !important;
+}
+
+.map-popup-state-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.map-popup-state-sub {
+  font-size: 11px;
+  color: var(--landing-text-muted);
+  margin-bottom: 8px;
+}
+
+.map-popup-stats-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  margin-bottom: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 7px 9px;
+  border-radius: var(--landing-radius-sm);
+  border: 1px solid var(--landing-border);
+}
+
+.map-popup-stats-row {
+  display: flex;
+  justify-content: space-between;
+  color: var(--landing-text-secondary);
+}
+
+.map-popup-stats-row strong {
+  color: var(--landing-text-primary);
+}
+
+.btn-popup-access {
+  width: 100%;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  padding: 7px 12px;
+  border-radius: var(--landing-radius-sm);
+  font-weight: 700;
+  font-size: 11.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-popup-access:hover {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+}
+
 /* ==========================================================================
-   NATIONAL OVERVIEW 4-KPI TILES
+   6. NATIONAL 4-KPI OVERVIEW SECTION
    ========================================================================== */
 .national-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
-  margin-top: 24px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .national-kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 540px) {
+  .national-kpi-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 .kpi-tile-landing {
-  background: var(--landing-bg-card);
-  backdrop-filter: blur(12px);
+  position: relative;
+  min-height: 160px;
+  padding: 22px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
   border: 1px solid var(--landing-border);
-  border-radius: var(--radius-md);
-  padding: 20px;
-  transition: all 0.2s ease;
+  border-radius: var(--landing-radius-md);
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .kpi-tile-landing:hover {
-  border-color: var(--landing-emerald);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.15);
+  transform: translateY(-3px);
+  border-color: rgba(52, 211, 153, 0.28);
+  background: linear-gradient(145deg, rgba(16, 185, 129, 0.06), rgba(255, 255, 255, 0.018));
 }
 
-.kpi-tile-top {
+.kpi-tile-index-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--landing-emerald-light);
+  letter-spacing: 1px;
+}
+
+.kpi-tile-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.kpi-tile-label {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.8px;
   text-transform: uppercase;
   color: var(--landing-text-muted);
-  margin-bottom: 8px;
 }
 
 .kpi-tile-val {
-  font-family: var(--font-display);
-  font-size: 30px;
+  font-size: 32px;
   font-weight: 800;
   color: #FFFFFF;
   line-height: 1.1;
-  margin-bottom: 4px;
+  font-family: var(--font-sans);
+  margin: 6px 0 2px;
 }
 
 .kpi-tile-sub {
   font-size: 12px;
   color: var(--landing-emerald-light);
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 /* ==========================================================================
-   CURRENT TRENDS SECTION
+   7. CURRENT TRENDS SECTION (ANALYTICAL MODULES)
    ========================================================================== */
 .trends-grid-landing {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1080px) {
   .trends-grid-landing {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 600px) {
   .trends-grid-landing {
     grid-template-columns: 1fr;
   }
@@ -478,8 +822,9 @@
 .trend-card-landing {
   background: var(--landing-bg-card);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--landing-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--landing-radius-lg);
   padding: 22px;
   display: flex;
   flex-direction: column;
@@ -490,40 +835,62 @@
 
 .trend-card-landing:hover {
   border-color: var(--landing-border-hover);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+  background: var(--landing-bg-card-hover);
 }
 
-.trend-card-top {
+.trend-category-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--landing-text-muted);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.trend-card-top-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-}
-
-.trend-card-icon {
-  font-size: 28px;
+  gap: 8px;
 }
 
 .trend-hazard-name {
-  font-size: 16px;
+  font-size: 15.5px;
   font-weight: 700;
   color: #FFFFFF;
-  margin-top: 6px;
+  line-height: 1.3;
 }
 
 .trend-level-pill {
   display: inline-block;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   padding: 3px 8px;
-  border-radius: var(--radius-pill);
-  letter-spacing: 0.4px;
+  border-radius: var(--landing-radius-pill);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .trend-card-summary {
   font-size: 12px;
   color: var(--landing-text-secondary);
-  line-height: 1.5;
+  line-height: 1.55;
+}
+
+.trend-card-bottom-row {
+  border-top: 1px solid var(--landing-border);
+  padding-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.trend-sparkline-svg {
+  width: 72px;
+  height: 20px;
 }
 
 .trend-delta-text {
@@ -534,15 +901,21 @@
 }
 
 /* ==========================================================================
-   SAFETY ADVISORY SECTION
+   8. SAFETY ADVISORY SECTION (OPERATIONAL GUIDANCE)
    ========================================================================== */
 .advisory-grid-landing {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
+  .advisory-grid-landing {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
   .advisory-grid-landing {
     grid-template-columns: 1fr;
   }
@@ -551,82 +924,97 @@
 .advisory-card-landing {
   background: var(--landing-bg-card);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--landing-border);
-  border-radius: var(--radius-lg);
-  padding: 24px;
+  border-radius: var(--landing-radius-lg);
+  padding: 22px;
   display: flex;
-  gap: 18px;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  border-left: 3.5px solid var(--landing-emerald);
   transition: all 0.2s ease;
 }
 
 .advisory-card-landing:hover {
-  border-color: var(--landing-emerald);
+  border-color: var(--landing-border-hover);
+  border-left-color: var(--landing-emerald-light);
+  transform: translateY(-2px);
+  background: var(--landing-bg-card-hover);
 }
 
-.advisory-icon-wrap {
-  width: 48px;
-  height: 48px;
+.advisory-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.advisory-icon-box {
+  width: 36px;
+  height: 36px;
   background: rgba(16, 185, 129, 0.1);
-  border: 1px solid var(--landing-border);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--landing-border-emerald);
+  border-radius: var(--landing-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  flex-shrink: 0;
+  color: var(--landing-emerald-light);
 }
 
 .advisory-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #FFFFFF;
-  margin-bottom: 4px;
+  margin-top: 6px;
 }
 
 .advisory-action-tag {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 10.5px;
+  font-weight: 800;
   color: var(--landing-emerald-light);
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid var(--landing-border-emerald);
+  padding: 3px 8px;
+  border-radius: var(--landing-radius-pill);
   text-transform: uppercase;
-  margin-bottom: 8px;
-  display: inline-block;
+  letter-spacing: 0.5px;
 }
 
 .advisory-body {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--landing-text-secondary);
   line-height: 1.55;
 }
 
+.advisory-footer-action {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--landing-emerald-light);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
 /* ==========================================================================
-   STATE AUTHORITY JURISDICTION ACCESS SECTION
+   9. ACTIVE DEMONSTRATION ALERTS (NETWORK DISPATCH FEED)
    ========================================================================== */
-.state-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-
-@media (max-width: 1024px) {
-  .state-cards-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 640px) {
-  .state-cards-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.state-access-card {
-  background: var(--landing-bg-card);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--landing-border);
-  border-radius: var(--radius-lg);
-  padding: 22px;
+.alert-feed-container {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+}
+
+.alert-row-card {
+  background: var(--landing-bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--landing-border);
+  border-radius: var(--landing-radius-md);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   cursor: pointer;
@@ -635,25 +1023,170 @@
   overflow: hidden;
 }
 
-.state-access-card::before {
+.alert-row-card::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
-  width: 4px;
+  width: 3.5px;
   bottom: 0;
+  background: var(--alert-severity-color, var(--landing-emerald));
+}
+
+.alert-row-card:hover {
+  border-color: var(--landing-border-hover);
+  background: var(--landing-bg-card-hover);
+  transform: translateY(-2px);
+}
+
+.alert-left-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+}
+
+.alert-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--landing-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--landing-border);
+}
+
+.alert-meta-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+  flex-wrap: wrap;
+}
+
+.alert-severity-badge {
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: var(--landing-radius-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.alert-title-text {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.alert-state-tag {
+  font-size: 11px;
+  color: var(--landing-text-muted);
+  font-family: var(--font-mono);
+}
+
+.alert-desc-text {
+  font-size: 12px;
+  color: var(--landing-text-secondary);
+  line-height: 1.45;
+}
+
+.alert-right-action {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.alert-time-pill {
+  font-size: 11px;
+  color: var(--landing-text-muted);
+  font-family: var(--font-mono);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.btn-alert-inspect {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid var(--landing-border);
+  color: var(--landing-emerald-light);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: var(--landing-radius-sm);
+  transition: all 0.15s ease;
+}
+
+.alert-row-card:hover .btn-alert-inspect {
   background: var(--landing-emerald);
-  transition: width 0.2s ease;
+  color: #FFFFFF;
+  border-color: var(--landing-emerald);
+}
+
+@media (max-width: 680px) {
+  .alert-row-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .alert-right-action {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--landing-border);
+    padding-top: 8px;
+  }
+}
+
+/* ==========================================================================
+   10. STATE AUTHORITY JURISDICTION GATEWAY CARDS
+   ========================================================================== */
+.state-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1080px) {
+  .state-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .state-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.state-access-card {
+  background: var(--landing-bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--landing-border);
+  border-radius: var(--landing-radius-lg);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .state-access-card:hover {
-  border-color: var(--landing-emerald-light);
-  transform: translateY(-4px);
-  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.2);
-}
-
-.state-access-card:hover::before {
-  width: 6px;
+  border-color: var(--landing-border-hover);
+  transform: translateY(-2px);
+  background: var(--landing-bg-card-hover);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 0 20px rgba(16, 185, 129, 0.1);
 }
 
 .state-card-header {
@@ -663,28 +1196,34 @@
 }
 
 .state-name-main {
-  font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
   color: #FFFFFF;
 }
 
 .state-code-badge {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   color: var(--landing-emerald-light);
-  background: rgba(16, 185, 129, 0.1);
-  padding: 3px 8px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--landing-border);
+  background: rgba(16, 185, 129, 0.08);
+  padding: 2px 7px;
+  border-radius: var(--landing-radius-sm);
+  border: 1px solid var(--landing-border-emerald);
+}
+
+.state-emblem-sub {
+  font-size: 11px;
+  color: var(--landing-emerald-light);
+  font-weight: 600;
+  margin: 3px 0 12px;
 }
 
 .state-card-meta {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 12px;
+  gap: 5px;
+  font-size: 11.5px;
   color: var(--landing-text-secondary);
 }
 
@@ -703,14 +1242,18 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid var(--landing-border);
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid var(--landing-border-emerald);
   color: var(--landing-emerald-light);
   font-weight: 700;
-  font-size: 12px;
+  font-size: 11.5px;
   padding: 9px;
-  border-radius: var(--radius-md);
+  border-radius: var(--landing-radius-md);
   transition: all 0.2s ease;
+}
+
+.btn-state-login-cta svg {
+  transition: transform 0.2s ease;
 }
 
 .state-access-card:hover .btn-state-login-cta {
@@ -719,15 +1262,21 @@
   border-color: var(--landing-emerald);
 }
 
+.state-access-card:hover .btn-state-login-cta svg {
+  transform: translateX(4px);
+}
+
 /* ==========================================================================
-   INSTITUTIONAL GOVERNMENT FOOTER
+   11. INSTITUTIONAL GOVERNMENT FOOTER & DEMO DISCLAIMER
    ========================================================================== */
 .national-footer {
-  background: #010403;
+  background: #020604;
   border-top: 1px solid var(--landing-border);
-  padding: 48px 32px 32px;
+  padding: 56px 32px 36px;
   color: var(--landing-text-muted);
   font-size: 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .footer-content-wrap {
@@ -735,8 +1284,8 @@
   margin: 0 auto;
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1.2fr;
-  gap: 32px;
-  margin-bottom: 32px;
+  gap: 36px;
+  margin-bottom: 36px;
 }
 
 @media (max-width: 900px) {
@@ -751,8 +1300,22 @@
   }
 }
 
-.footer-col-title {
+.footer-brand-title {
+  font-weight: 800;
+  font-size: 13.5px;
+  color: #FFFFFF;
+}
+
+.footer-brand-desc {
   font-size: 12px;
+  color: var(--landing-text-secondary);
+  line-height: 1.6;
+  max-width: 420px;
+  margin-top: 8px;
+}
+
+.footer-col-title {
+  font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.6px;
   text-transform: uppercase;
@@ -769,6 +1332,7 @@
 .footer-links-list a {
   color: var(--landing-text-secondary);
   text-decoration: none;
+  font-size: 12px;
   transition: color 0.15s ease;
 }
 
@@ -776,14 +1340,44 @@
   color: var(--landing-emerald-light);
 }
 
+.footer-demo-disclaimer {
+  max-width: 1400px;
+  margin: 0 auto 24px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--landing-border);
+  border-radius: var(--landing-radius-sm);
+  font-size: 11px;
+  color: var(--landing-text-muted);
+  line-height: 1.5;
+}
+
 .footer-bottom-bar {
   max-width: 1400px;
   margin: 0 auto;
-  border-top: 1px solid rgba(16, 185, 129, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   padding-top: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
+  font-size: 11.5px;
+}
+
+/* ==========================================================================
+   12. ACCESSIBILITY & MOTION PREFERENCES
+   ========================================================================== */
+:focus-visible {
+  outline: 2px solid var(--landing-emerald);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
