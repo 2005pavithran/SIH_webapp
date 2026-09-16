@@ -146,6 +146,37 @@ html, body {
   background-color: var(--color-bg);
 }
 
+/* Standalone Landing Page Mode */
+#app.layout-mode-standalone .topnav {
+  display: none !important;
+}
+
+#app.layout-mode-standalone .sidebar {
+  display: none !important;
+}
+
+#app.layout-mode-standalone .app-body {
+  width: 100vw;
+  height: 100vh;
+}
+
+#app.layout-mode-standalone .main-content {
+  width: 100%;
+  height: 100%;
+  padding: 0 !important;
+  overflow-y: auto;
+  background-color: #010604;
+}
+
+/* Operational Command Center Mode */
+#app.layout-mode-operational .topnav {
+  display: flex;
+}
+
+#app.layout-mode-operational .sidebar {
+  display: flex;
+}
+
 .app-body {
   display: flex;
   flex: 1;

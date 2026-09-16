@@ -10,14 +10,47 @@ export function createSystemSettingsView() {
   container.className = 'settings-view animated-fade';
 
   function render() {
+    const state = store.getState();
+    const stateName = (state.loggedInStateName || 'Tamil Nadu').toUpperCase();
+    const officerName = state.currentUser ? state.currentUser.name : 'Authorized Officer';
+    const officerRole = state.currentUser ? state.currentUser.role : 'Incident Commander';
+
     container.innerHTML = `
       <div class="view-header-row">
         <div>
           <h1 class="view-title-main">
-            <span>⚙️ SYSTEM & TELEMETRY CONFIGURATION</span>
+            <span>⚙️ ${stateName} SDMA — SYSTEM & TELEMETRY CONFIGURATION</span>
             <span class="status-badge info">ADMIN ACCESS</span>
           </h1>
-          <p class="view-desc-sub">Configure edge mesh ingestion parameters, CAP-India emergency sirens, AI threshold triggers, and simulation modes</p>
+          <p class="view-desc-sub">Configure edge mesh ingestion parameters, CAP-India emergency sirens, AI threshold triggers, and simulation modes for ${state.loggedInStateName || 'State'}</p>
+        </div>
+      </div>
+
+      <!-- Active Session & Jurisdiction Banner -->
+      <div class="gov-card" style="margin-bottom: 24px; border-left: 4px solid var(--color-primary);">
+        <div class="gov-card-header">
+          <div class="gov-card-title">
+            <span>🔐 Active Authority Session & Scoped Jurisdiction</span>
+          </div>
+          <span class="status-badge success">SECURE PROTOCOL</span>
+        </div>
+        <div class="gov-card-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+          <div>
+            <span style="font-size: 11px; color: var(--color-text-muted); text-transform: uppercase;">Officer Identity:</span>
+            <div style="font-weight: 700; color: var(--color-text-primary); font-size: 13px;">${officerName}</div>
+          </div>
+          <div>
+            <span style="font-size: 11px; color: var(--color-text-muted); text-transform: uppercase;">Assigned Role:</span>
+            <div style="font-weight: 700; color: var(--color-primary); font-size: 13px;">${officerRole}</div>
+          </div>
+          <div>
+            <span style="font-size: 11px; color: var(--color-text-muted); text-transform: uppercase;">Authorized State Jurisdiction:</span>
+            <div style="font-weight: 700; color: var(--color-text-primary); font-size: 13px;">${state.loggedInStateName || 'Tamil Nadu'} (SDMA)</div>
+          </div>
+          <div>
+            <span style="font-size: 11px; color: var(--color-text-muted); text-transform: uppercase;">Edge Node Density:</span>
+            <div style="font-family: var(--font-mono); font-weight: 700; color: var(--color-success); font-size: 13px;">${state.sensors.length} Nodes Active</div>
+          </div>
         </div>
       </div>
 

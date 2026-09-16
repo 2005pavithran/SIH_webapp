@@ -1,9 +1,9 @@
-// Dashboard View Component (Primary Command Center Screen)
+// Dashboard View Component (State Authority Command Center)
 
 import { store } from '../state/store.js';
 import { createGISMap } from './LiveMapGIS.js';
 import { simulationEngine } from '../state/simulation.js';
-import { getRiskClass, getHazardIcon } from '../utils/formatters.js';
+import { getRiskClass } from '../utils/formatters.js';
 import { createAnnouncementBanner } from './AnnouncementBanner.js';
 
 export function createDashboardView() {
@@ -14,6 +14,8 @@ export function createDashboardView() {
 
   function render() {
     const state = store.getState();
+    const stateName = state.loggedInState || 'Tamil Nadu';
+    const stateConfig = store.getAuthorizedStateConfig();
 
     container.innerHTML = `
       <!-- Container for announcement banner -->
@@ -22,18 +24,20 @@ export function createDashboardView() {
       <!-- Simulation Scenario Control Bar -->
       <div class="scenario-bar">
         <div class="scenario-info-text">
-          <span class="scenario-tag">SIH DEMONSTRATION MODE</span>
-          <span>Inject live multi-hazard early warning & disaster response scenarios:</span>
+          <span class="scenario-tag">SIH EVALUATION MODE</span>
+          <span>Inject live multi-hazard early warning scenarios for ${stateName}:</span>
         </div>
         <div class="scenario-btn-group">
-          <button class="btn-scenario ${state.activeScenario === 'avinashi_flood' ? 'active' : ''}" id="demo-avinashi-btn" title="Simulate Coimbatore cloudburst causing downstream flood in Avinashi">
-            🌊 Coimbatore → Avinashi Flood Demo
-          </button>
+          ${state.loggedInStateId === 'TN' ? `
+            <button class="btn-scenario ${state.activeScenario === 'avinashi_flood' ? 'active' : ''}" id="demo-avinashi-btn" title="Simulate Coimbatore cloudburst causing downstream flood in Avinashi">
+              🌊 Coimbatore → Avinashi Surge
+            </button>
+          ` : ''}
           <button class="btn-scenario ${state.activeScenario === 'flood' ? 'active' : ''}" id="demo-flood-btn">
-            🌊 Flash Flood Surge (Dist. X)
+            🌊 Flash Flood Surge
           </button>
           <button class="btn-scenario ${state.activeScenario === 'fire' ? 'active' : ''}" id="demo-fire-btn">
-            🔥 Forest Fire (Zone Y)
+            🔥 Forest Fire Thermal Spikes
           </button>
           <button class="btn-scenario ${state.activeScenario === 'baseline' ? 'active' : ''}" id="demo-reset-btn">
             🔄 Reset Baseline
@@ -45,10 +49,12 @@ export function createDashboardView() {
       <div class="view-header-row">
         <div>
           <h1 class="view-title-main">
-            <span>COMMAND CENTER & SITUATIONAL OVERVIEW</span>
-            <span class="status-badge success">SYSTEM NORMAL • 96.8% UPTIME</span>
+            <span>${stateName.toUpperCase()} ENVIRONMENTAL COMMAND CENTER</span>
+            <span class="status-badge success">OPERATIONAL • ${state.kpi.uptime}% UPTIME</span>
           </h1>
-          <p class="view-desc-sub">Real-time multi-hazard telemetry, AI predictive risk trajectories, and field deployment status across catchment basins</p>
+          <p class="view-desc-sub">
+            Real-time telemetry, AI predictive risk trajectories, and field deployment status across ${stateConfig.districts.length} monitored sectors in ${stateName}
+          </p>
         </div>
         <div class="view-actions-group">
           <button class="btn-secondary" id="btn-export-brief">
@@ -72,69 +78,69 @@ export function createDashboardView() {
       <!-- Quick Access Action Pills -->
       <div class="quick-access-bar">
         <span style="font-size: 11px; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase;">Quick Actions:</span>
-        <button class="quick-action-pill" onclick="window.appStore.setView('risk-map')">🗺️ Explore Risk Map</button>
-        <button class="quick-action-pill" onclick="window.appStore.setView('alerts')">🚨 Review 12 Alerts</button>
-        <button class="quick-action-pill" onclick="window.drawerManager.openAIDrawer('Flood')">🤖 AI Prediction Model</button>
-        <button class="quick-action-pill" onclick="window.appStore.setView('analytics')">📊 Environmental Analytics</button>
-        <button class="quick-action-pill" onclick="window.drawerManager.openStaffDrawer()">🛡️ Operational Directory</button>
+        <button class="quick-action-pill" onclick="window.location.hash = '#risk-map'">🗺️ State Risk Map</button>
+        <button class="quick-action-pill" onclick="window.location.hash = '#alerts'">🚨 Review ${state.alerts.length} Alerts</button>
+        <button class="quick-action-pill" onclick="window.drawerManager?.openAIDrawer('${state.aiPrediction?.hazard || 'Flood'}')">🤖 AI Prediction Model</button>
+        <button class="quick-action-pill" onclick="window.location.hash = '#analytics'">📊 Environmental Analytics</button>
+        <button class="quick-action-pill" onclick="window.drawerManager?.openStaffDrawer()">🛡️ Tactical Radio Directory</button>
       </div>
 
-      <!-- 4 Compact KPI Metric Cards -->
+      <!-- 4 Compact KPI Metric Cards (State Scoped) -->
       <div class="dashboard-kpi-grid">
         <div class="kpi-card" id="kpi-sensors-card" title="Click to view full sensor telemetry table">
           <div class="kpi-card-top">
-            <span class="kpi-label">📡 SENSOR MESH</span>
+            <span class="kpi-label">📡 STATE SENSOR MESH</span>
             <div class="kpi-icon-wrap">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"></path><circle cx="12" cy="12" r="2"></circle><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"></path></svg>
             </div>
           </div>
           <div class="kpi-value-row">
             <span class="kpi-numeric-val" id="kpi-sensors-val">${state.kpi.totalSensors.toLocaleString()}</span>
-            <span class="kpi-delta-tag positive">98.4% Health</span>
+            <span class="kpi-delta-tag positive">Active Nodes</span>
           </div>
-          <div class="kpi-subtext">${state.kpi.onlineSensors.toLocaleString()} Online • 29 Degraded • 12 Offline</div>
+          <div class="kpi-subtext">${state.kpi.onlineSensors.toLocaleString()} Online Telemetry Channels in ${stateName}</div>
         </div>
 
         <div class="kpi-card" id="kpi-alerts-card" title="Click to view alert center">
           <div class="kpi-card-top">
-            <span class="kpi-label">🚨 ACTIVE ALERTS</span>
+            <span class="kpi-label">🚨 ACTIVE STATE ALERTS</span>
             <div class="kpi-icon-wrap">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
             </div>
           </div>
           <div class="kpi-value-row">
             <span class="kpi-numeric-val" id="kpi-alerts-val">${state.alerts.length}</span>
-            <span class="kpi-delta-tag warning">+3 past hr</span>
+            <span class="kpi-delta-tag warning">${state.alerts.filter(a => a.severity === 'Critical').length} Critical</span>
           </div>
           <div class="kpi-subtext">${state.alerts.filter(a => a.severity === 'Critical').length} Critical • ${state.alerts.filter(a => a.severity === 'Warning').length} Warning</div>
         </div>
 
         <div class="kpi-card" id="kpi-crit-card" title="Click to view incidents">
           <div class="kpi-card-top">
-            <span class="kpi-label">🔴 CRITICAL HAZARDS</span>
+            <span class="kpi-label">🔴 EMERGENCY MISSIONS</span>
             <div class="kpi-icon-wrap" style="color: var(--color-critical);">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>
             </div>
           </div>
           <div class="kpi-value-row">
             <span class="kpi-numeric-val" style="color: var(--color-critical);" id="kpi-crit-val">${state.kpi.criticalIncidents < 10 ? '0' + state.kpi.criticalIncidents : state.kpi.criticalIncidents}</span>
-            <span class="kpi-delta-tag critical">Action Required</span>
+            <span class="kpi-delta-tag critical">Action Active</span>
           </div>
-          <div class="kpi-subtext">Flash Flood #FLD-042 & Wildfire #FIR-019</div>
+          <div class="kpi-subtext">SOP Response Executing via SDRF</div>
         </div>
 
         <div class="kpi-card" id="kpi-uptime-card" title="Click to view system settings">
           <div class="kpi-card-top">
-            <span class="kpi-label">🛡️ SYSTEM UPTIME</span>
+            <span class="kpi-label">🛡️ EDGE MESH LATENCY</span>
             <div class="kpi-icon-wrap" style="color: var(--color-success);">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
             </div>
           </div>
           <div class="kpi-value-row">
-            <span class="kpi-numeric-val" id="kpi-uptime-val">${state.kpi.uptime}%</span>
-            <span class="kpi-delta-tag positive">${state.kpi.latencyMs}ms Latency</span>
+            <span class="kpi-numeric-val" id="kpi-uptime-val">${state.kpi.latencyMs} ms</span>
+            <span class="kpi-delta-tag positive">Synchronized</span>
           </div>
-          <div class="kpi-subtext">LoRaWAN Edge Mesh Synchronized</div>
+          <div class="kpi-subtext">${stateConfig.code} Telemetry Stream Active</div>
         </div>
       </div>
 
@@ -144,7 +150,7 @@ export function createDashboardView() {
         <div class="gov-card">
           <div class="gov-card-header">
             <div class="gov-card-title">
-              <span>🗺️ Live GIS Situational Map</span>
+              <span>🗺️ ${stateName} Situational GIS Map</span>
               <span class="status-badge success" style="font-size: 10px;">REAL-TIME</span>
             </div>
             <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" id="btn-fullscreen-map">
@@ -158,7 +164,7 @@ export function createDashboardView() {
             <div class="map-floating-controls">
               <div class="map-search-box">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" id="map-search-input" placeholder="Search node, hazard or basin...">
+                <input type="text" id="map-search-input" placeholder="Search node, hazard or district in ${stateName}...">
               </div>
 
               <div class="map-control-actions">
@@ -175,7 +181,6 @@ export function createDashboardView() {
                   <button class="layer-btn flood ${state.mapLayers.flood ? 'active' : ''}" data-layer="flood">🌊 Flood</button>
                   <button class="layer-btn fire ${state.mapLayers.fire ? 'active' : ''}" data-layer="fire">🔥 Fire</button>
                   <button class="layer-btn air ${state.mapLayers.air ? 'active' : ''}" data-layer="air">🌫 Air</button>
-                  <button class="layer-btn heat ${state.mapLayers.heat ? 'active' : ''}" data-layer="heat">🌡 Heat</button>
                   <button class="layer-btn ${state.mapLayers.sensors ? 'active' : ''}" data-layer="sensors">📡 Nodes</button>
                   <button class="layer-btn ${state.mapLayers.teams ? 'active' : ''}" data-layer="teams">🚑 Teams</button>
                 </div>
@@ -187,7 +192,7 @@ export function createDashboardView() {
 
             <!-- Map Legend -->
             <div class="map-legend-overlay">
-              <div class="legend-title">Risk Severity</div>
+              <div class="legend-title">${stateName} Risk Severity</div>
               <div class="legend-items">
                 <div class="legend-item"><div class="legend-dot low"></div> Low</div>
                 <div class="legend-item"><div class="legend-dot mod"></div> Moderate</div>
@@ -202,7 +207,7 @@ export function createDashboardView() {
         <div class="gov-card">
           <div class="gov-card-header">
             <div class="gov-card-title">
-              <span>🚨 Critical & Active Alerts</span>
+              <span>🚨 Active Alerts in ${stateName}</span>
               <span class="status-badge critical" style="font-size: 11px;">${state.alerts.length} OPEN</span>
             </div>
             <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" id="btn-view-all-alerts">
@@ -212,14 +217,18 @@ export function createDashboardView() {
 
           <div class="gov-card-body" style="padding: 14px;">
             <div class="alerts-feed-scroller" id="dashboard-alerts-feed">
-              ${state.alerts.map(alert => {
+              ${state.alerts.length === 0 ? `
+                <div style="padding: 24px; text-align: center; color: var(--color-text-muted); font-size: 13px;">
+                  No active alerts currently reported for ${stateName}.
+                </div>
+              ` : state.alerts.map(alert => {
                 const riskCls = getRiskClass(alert.severity);
                 return `
                   <div class="alert-card-item ${riskCls}" data-alert-id="${alert.id}">
                     <div class="alert-card-body">
                       <div class="alert-card-header">
                         <span class="status-badge ${riskCls}">${alert.severity}</span>
-                        <span class="alert-card-title">${alert.hazard} Risk</span>
+                        <span class="alert-card-title">${alert.hazard} Event</span>
                         <span class="ai-confidence-pill">AI ${alert.aiConfidence}%</span>
                       </div>
                       <div style="font-size: 12px; color: var(--color-text-primary); font-weight: 600;">${alert.title}</div>
@@ -230,7 +239,7 @@ export function createDashboardView() {
                       </div>
                     </div>
                     <div class="alert-card-actions">
-                      <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="window.drawerManager.openAlertDrawer('${alert.id}')">
+                      <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="window.drawerManager?.openAlertDrawer('${alert.id}')">
                         DETAILS
                       </button>
                     </div>
@@ -248,15 +257,15 @@ export function createDashboardView() {
         <div class="gov-card">
           <div class="gov-card-header">
             <div class="gov-card-title">
-              <span>📈 Hydro-Meteorological Inflow Trend</span>
+              <span>📈 ${stateName} Hydro-Meteorological Trend</span>
             </div>
             <span class="status-badge critical" style="font-size: 11px;">DANGER THRESHOLD: 3.20m</span>
           </div>
 
           <div class="gov-card-body">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 12px;">
-              <span style="color: var(--color-text-secondary);">Vythiri Catchment Inundation vs Safe Operating Band</span>
-              <strong style="color: var(--color-critical); font-family: var(--font-mono);">Peak Runoff: 3.84m (CRITICAL)</strong>
+              <span style="color: var(--color-text-secondary);">${stateConfig.primaryThreat}</span>
+              <strong style="color: var(--color-critical); font-family: var(--font-mono);">Real-Time Flow Telemetry</strong>
             </div>
             <div style="height: 190px; position: relative;">
               <canvas id="dashboard-trend-chart"></canvas>
@@ -268,16 +277,20 @@ export function createDashboardView() {
         <div class="gov-card">
           <div class="gov-card-header">
             <div class="gov-card-title">
-              <span>🚑 Recent Emergency Incidents</span>
+              <span>🚑 Emergency Incidents & Tactical SOP</span>
             </div>
-            <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="window.appStore.setView('incidents')">
-              <span>View All SOPs</span>
+            <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="window.location.hash = '#incidents'">
+              <span>View SOPs</span>
             </button>
           </div>
 
           <div class="gov-card-body" style="padding: 14px;">
             <div class="incidents-mini-list">
-              ${state.incidents.map(inc => {
+              ${state.incidents.length === 0 ? `
+                <div style="padding: 24px; text-align: center; color: var(--color-text-muted); font-size: 13px;">
+                  No active emergency incidents currently logged for ${stateName}.
+                </div>
+              ` : state.incidents.map(inc => {
                 const completedCount = inc.sop.filter(s => s.done).length;
                 const totalCount = inc.sop.length;
                 const percent = Math.round((completedCount / totalCount) * 100);
@@ -298,7 +311,7 @@ export function createDashboardView() {
                     </div>
                     <div style="text-align: right;">
                       <div style="font-size: 11px; font-weight: 700; color: var(--color-primary); font-family: var(--font-mono);">${completedCount}/${totalCount} SOP (${percent}%)</div>
-                      <button class="btn-secondary" style="padding: 3px 8px; font-size: 11px; margin-top: 4px;" onclick="window.appStore.setView('incidents')">
+                      <button class="btn-secondary" style="padding: 3px 8px; font-size: 11px; margin-top: 4px;" onclick="window.location.hash = '#incidents'">
                         Manage
                       </button>
                     </div>
@@ -351,16 +364,16 @@ export function createDashboardView() {
     });
 
     // KPI Clicks
-    container.querySelector('#kpi-sensors-card').addEventListener('click', () => store.setView('sensors'));
-    container.querySelector('#kpi-alerts-card').addEventListener('click', () => store.setView('alerts'));
-    container.querySelector('#kpi-crit-card').addEventListener('click', () => store.setView('incidents'));
-    container.querySelector('#kpi-uptime-card').addEventListener('click', () => store.setView('settings'));
+    container.querySelector('#kpi-sensors-card')?.addEventListener('click', () => { window.location.hash = '#sensors'; });
+    container.querySelector('#kpi-alerts-card')?.addEventListener('click', () => { window.location.hash = '#alerts'; });
+    container.querySelector('#kpi-crit-card')?.addEventListener('click', () => { window.location.hash = '#incidents'; });
+    container.querySelector('#kpi-uptime-card')?.addEventListener('click', () => { window.location.hash = '#settings'; });
 
     // Navigation jumps
-    container.querySelector('#btn-view-all-alerts').addEventListener('click', () => store.setView('alerts'));
-    container.querySelector('#btn-fullscreen-map').addEventListener('click', () => store.setView('risk-map'));
-    container.querySelector('#btn-export-brief').addEventListener('click', () => store.setView('analytics'));
-    container.querySelector('#btn-create-incident').addEventListener('click', () => store.setView('incidents'));
+    container.querySelector('#btn-view-all-alerts')?.addEventListener('click', () => { window.location.hash = '#alerts'; });
+    container.querySelector('#btn-fullscreen-map')?.addEventListener('click', () => { window.location.hash = '#risk-map'; });
+    container.querySelector('#btn-export-brief')?.addEventListener('click', () => { window.location.hash = '#reports'; });
+    container.querySelector('#btn-create-incident')?.addEventListener('click', () => { window.location.hash = '#incidents'; });
 
     // Map layer buttons
     container.querySelectorAll('.layer-btn').forEach(btn => {
@@ -382,7 +395,7 @@ export function createDashboardView() {
           s.id.toLowerCase().includes(query) || s.name.toLowerCase().includes(query) || s.location.toLowerCase().includes(query)
         );
         if (matchedSensor && gisInstance) {
-          gisInstance.flyTo([matchedSensor.lat, matchedSensor.lng], 15);
+          gisInstance.flyTo([matchedSensor.lat, matchedSensor.lng], 14);
         }
       });
     }
@@ -411,7 +424,7 @@ export function createDashboardView() {
 
     const labels = ['14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00 (Now)', '21:00 (FC)', '22:00 (FC)'];
     const data = [1.2, 1.4, 1.8, 2.3, 2.9, 3.4, 3.84, 4.12, 4.35];
-    const threshold = 3.2; // Danger level (3.2m)
+    const threshold = 3.2;
 
     const padding = { top: 20, right: 30, bottom: 30, left: 40 };
     const chartW = width - padding.left - padding.right;
@@ -507,7 +520,6 @@ export function createDashboardView() {
     });
   }
 
-  // Handle responsive chart resizing
   const onResizeChart = () => {
     initTrendChart();
   };
@@ -517,7 +529,7 @@ export function createDashboardView() {
 
   // Reactive store updates
   const unsubscribe = store.subscribe((state, event) => {
-    if (event === 'telemetry_tick' || event === 'new_alert' || event === 'sop_update') {
+    if (event === 'telemetry_tick' || event === 'new_alert' || event === 'sop_update' || event === 'auth_login') {
       const kpiSensors = container.querySelector('#kpi-sensors-val');
       const kpiAlerts = container.querySelector('#kpi-alerts-val');
       const kpiCrit = container.querySelector('#kpi-crit-val');
@@ -526,7 +538,7 @@ export function createDashboardView() {
       if (kpiSensors) kpiSensors.textContent = state.kpi.totalSensors.toLocaleString();
       if (kpiAlerts) kpiAlerts.textContent = state.alerts.length;
       if (kpiCrit) kpiCrit.textContent = state.kpi.criticalIncidents < 10 ? '0' + state.kpi.criticalIncidents : state.kpi.criticalIncidents;
-      if (kpiUptime) kpiUptime.textContent = `${state.kpi.uptime}%`;
+      if (kpiUptime) kpiUptime.textContent = `${state.kpi.latencyMs} ms`;
 
       if (gisInstance) gisInstance.refresh();
     }

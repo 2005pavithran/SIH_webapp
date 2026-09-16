@@ -1,0 +1,789 @@
+/* ==========================================================================
+   NATIONAL ENVIRONMENTAL INTELLIGENCE NETWORK — LANDING PAGE THEME
+   Dark Environmental Command Aesthetic • Deep #010604 • Emerald Accents
+   Glassmorphism • GIS HUD • Technical Elegance • Institutional Quality
+   ========================================================================== */
+
+:root {
+  --landing-bg: #010604;
+  --landing-bg-soft: #04120a;
+  --landing-bg-card: rgba(6, 26, 16, 0.7);
+  --landing-border: rgba(16, 185, 129, 0.18);
+  --landing-border-hover: rgba(52, 211, 153, 0.45);
+  --landing-emerald: #10b981;
+  --landing-emerald-light: #34d399;
+  --landing-emerald-dark: #059669;
+  --landing-glow: rgba(16, 185, 129, 0.25);
+  --landing-text-primary: #F0FDF4;
+  --landing-text-secondary: #94A3B8;
+  --landing-text-muted: #64748B;
+}
+
+/* Base Landing Scroller */
+.landing-page-root {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--landing-bg);
+  color: var(--landing-text-primary);
+  font-family: var(--font-sans);
+  position: relative;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.12) 0%, transparent 60%),
+    radial-gradient(circle at 10% 40%, rgba(5, 150, 105, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 90% 70%, rgba(16, 185, 129, 0.06) 0%, transparent 40%),
+    radial-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 32px 32px;
+}
+
+/* ==========================================================================
+   BOOT ANIMATION CONTAINER (Phase 1 to 4)
+   ========================================================================== */
+.boot-animation-hero {
+  width: 100%;
+  min-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 40px 24px 60px;
+  overflow: hidden;
+}
+
+.boot-status-hud {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  animation: hudPulse 3s ease-in-out infinite;
+}
+
+.hud-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid var(--landing-border);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--landing-emerald-light);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+}
+
+.hud-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--landing-emerald);
+  box-shadow: 0 0 10px var(--landing-emerald);
+  animation: blinkFast 1.2s infinite;
+}
+
+@keyframes blinkFast {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.85); }
+}
+
+@keyframes hudPulse {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 1; }
+}
+
+/* 3D Earth Globe Canvas */
+.globe-canvas-wrapper {
+  width: 480px;
+  height: 480px;
+  max-width: 90vw;
+  max-height: 90vw;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0 28px;
+}
+
+.globe-canvas-element {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  box-shadow: 0 0 80px rgba(16, 185, 129, 0.25), inset 0 0 60px rgba(16, 185, 129, 0.3);
+  cursor: grab;
+}
+
+.globe-canvas-element:active {
+  cursor: grabbing;
+}
+
+.hero-content-group {
+  text-align: center;
+  max-width: 860px;
+  z-index: 10;
+}
+
+.hero-main-title {
+  font-family: var(--font-display);
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  line-height: 1.15;
+  color: #FFFFFF;
+  margin-bottom: 12px;
+  text-shadow: 0 2px 20px rgba(16, 185, 129, 0.3);
+}
+
+.hero-main-title span.emerald-gradient {
+  background: linear-gradient(135deg, #34D399 0%, #10B981 50%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+  font-size: 16px;
+  color: var(--landing-text-secondary);
+  line-height: 1.6;
+  max-width: 720px;
+  margin: 0 auto 28px;
+}
+
+.hero-cta-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.btn-landing-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.4px;
+  padding: 12px 28px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(52, 211, 153, 0.5);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-landing-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.6);
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+}
+
+.btn-landing-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(6, 26, 16, 0.8);
+  color: var(--landing-emerald-light);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--landing-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-landing-secondary:hover {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: var(--landing-emerald-light);
+  color: #FFFFFF;
+}
+
+/* ==========================================================================
+   NATIONAL LANDING HEADER
+   ========================================================================== */
+.national-header {
+  height: 72px;
+  background: rgba(1, 6, 4, 0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--landing-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.national-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.gov-emblem-badge {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, #064E3B 0%, #022C22 100%);
+  border: 1.5px solid var(--landing-emerald);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+}
+
+.national-title-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.national-brand-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  color: #FFFFFF;
+  line-height: 1.2;
+}
+
+.national-brand-sub {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--landing-emerald-light);
+}
+
+.national-header-nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.nav-link-landing {
+  color: var(--landing-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.nav-link-landing:hover {
+  color: var(--landing-emerald-light);
+}
+
+.national-header-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.emergency-pill-landing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--landing-text-secondary);
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid var(--landing-border);
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+}
+
+.emergency-pill-landing strong {
+  color: #FFFFFF;
+  font-family: var(--font-mono);
+}
+
+/* ==========================================================================
+   LANDING SECTIONS COMMON
+   ========================================================================== */
+.landing-section {
+  padding: 60px 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.landing-section-header {
+  margin-bottom: 36px;
+  text-align: center;
+}
+
+.landing-section-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--landing-emerald);
+  margin-bottom: 6px;
+}
+
+.landing-section-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: -0.4px;
+}
+
+.landing-section-sub {
+  font-size: 14px;
+  color: var(--landing-text-secondary);
+  margin-top: 6px;
+}
+
+/* ==========================================================================
+   NATIONAL GIS RISK MAP SECTION
+   ========================================================================== */
+.gis-map-card-landing {
+  background: var(--landing-bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--landing-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 30px rgba(16, 185, 129, 0.1);
+  position: relative;
+}
+
+.gis-map-header-landing {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--landing-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(1, 6, 4, 0.6);
+}
+
+.gis-map-title-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#national-gis-map {
+  width: 100%;
+  height: 540px;
+  background: #020b06;
+}
+
+.national-map-helper-badge {
+  position: absolute;
+  top: 75px;
+  left: 24px;
+  background: rgba(1, 6, 4, 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--landing-border);
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  color: var(--landing-text-primary);
+  z-index: 500;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* ==========================================================================
+   NATIONAL OVERVIEW 4-KPI TILES
+   ========================================================================== */
+.national-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-top: 24px;
+}
+
+@media (max-width: 900px) {
+  .national-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.kpi-tile-landing {
+  background: var(--landing-bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--landing-border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+
+.kpi-tile-landing:hover {
+  border-color: var(--landing-emerald);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.15);
+}
+
+.kpi-tile-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--landing-text-muted);
+  margin-bottom: 8px;
+}
+
+.kpi-tile-val {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+  color: #FFFFFF;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.kpi-tile-sub {
+  font-size: 12px;
+  color: var(--landing-emerald-light);
+}
+
+/* ==========================================================================
+   CURRENT TRENDS SECTION
+   ========================================================================== */
+.trends-grid-landing {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 1024px) {
+  .trends-grid-landing {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .trends-grid-landing {
+    grid-template-columns: 1fr;
+  }
+}
+
+.trend-card-landing {
+  background: var(--landing-bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--landing-border);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  transition: all 0.2s ease;
+}
+
+.trend-card-landing:hover {
+  border-color: var(--landing-border-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.trend-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.trend-card-icon {
+  font-size: 28px;
+}
+
+.trend-hazard-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-top: 6px;
+}
+
+.trend-level-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.4px;
+}
+
+.trend-card-summary {
+  font-size: 12px;
+  color: var(--landing-text-secondary);
+  line-height: 1.5;
+}
+
+.trend-delta-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--landing-emerald-light);
+}
+
+/* ==========================================================================
+   SAFETY ADVISORY SECTION
+   ========================================================================== */
+.advisory-grid-landing {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .advisory-grid-landing {
+    grid-template-columns: 1fr;
+  }
+}
+
+.advisory-card-landing {
+  background: var(--landing-bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--landing-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  gap: 18px;
+  transition: all 0.2s ease;
+}
+
+.advisory-card-landing:hover {
+  border-color: var(--landing-emerald);
+}
+
+.advisory-icon-wrap {
+  width: 48px;
+  height: 48px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--landing-border);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.advisory-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 4px;
+}
+
+.advisory-action-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--landing-emerald-light);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: inline-block;
+}
+
+.advisory-body {
+  font-size: 13px;
+  color: var(--landing-text-secondary);
+  line-height: 1.55;
+}
+
+/* ==========================================================================
+   STATE AUTHORITY JURISDICTION ACCESS SECTION
+   ========================================================================== */
+.state-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 1024px) {
+  .state-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .state-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.state-access-card {
+  background: var(--landing-bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--landing-border);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.state-access-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  bottom: 0;
+  background: var(--landing-emerald);
+  transition: width 0.2s ease;
+}
+
+.state-access-card:hover {
+  border-color: var(--landing-emerald-light);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.2);
+}
+
+.state-access-card:hover::before {
+  width: 6px;
+}
+
+.state-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.state-name-main {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.state-code-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--landing-emerald-light);
+  background: rgba(16, 185, 129, 0.1);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--landing-border);
+}
+
+.state-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--landing-text-secondary);
+}
+
+.state-card-meta-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.state-card-meta-row strong {
+  color: var(--landing-text-primary);
+}
+
+.btn-state-login-cta {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid var(--landing-border);
+  color: var(--landing-emerald-light);
+  font-weight: 700;
+  font-size: 12px;
+  padding: 9px;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.state-access-card:hover .btn-state-login-cta {
+  background: var(--landing-emerald);
+  color: #FFFFFF;
+  border-color: var(--landing-emerald);
+}
+
+/* ==========================================================================
+   INSTITUTIONAL GOVERNMENT FOOTER
+   ========================================================================== */
+.national-footer {
+  background: #010403;
+  border-top: 1px solid var(--landing-border);
+  padding: 48px 32px 32px;
+  color: var(--landing-text-muted);
+  font-size: 12px;
+}
+
+.footer-content-wrap {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.2fr;
+  gap: 32px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 900px) {
+  .footer-content-wrap {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .footer-content-wrap {
+    grid-template-columns: 1fr;
+  }
+}
+
+.footer-col-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  margin-bottom: 12px;
+}
+
+.footer-links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer-links-list a {
+  color: var(--landing-text-secondary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.footer-links-list a:hover {
+  color: var(--landing-emerald-light);
+}
+
+.footer-bottom-bar {
+  max-width: 1400px;
+  margin: 0 auto;
+  border-top: 1px solid rgba(16, 185, 129, 0.1);
+  padding-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}

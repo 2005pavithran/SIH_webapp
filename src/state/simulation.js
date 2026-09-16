@@ -1,4 +1,4 @@
-// Live Telemetry Simulation Engine & Scenario Injector for Demonstrations
+// Live Telemetry Simulation Engine & Autonomous Edge-Node Engine
 
 import { store } from './store.js';
 import { showToast } from '../components/ToastNotification.js';
@@ -12,7 +12,7 @@ class SimulationEngine {
 
   start() {
     if (this.interval) clearInterval(this.interval);
-    this.interval = setInterval(() => this.tick(), 4000);
+    this.interval = setInterval(() => this.tick(), 3500);
   }
 
   stop() {
@@ -27,7 +27,7 @@ class SimulationEngine {
     const state = store.getState();
     const nowIso = new Date().toISOString();
 
-    // 1. Apply micro-fluctuations to Active sensors only
+    // 1. Autonomous micro-fluctuations on active state sensors
     const sensorUpdates = state.sensors
       .filter(s => s.status !== 'Offline' && s.health !== 'Damaged')
       .map(sensor => {
@@ -48,90 +48,53 @@ class SimulationEngine {
         };
       });
 
-    // 2. Every 6th tick, flip a Maintenance sensor to Active occasionally
-    if (this.tickCount % 6 === 0) {
-      const maintenanceSensor = state.sensors.find(s => s.health === 'Maintenance Required' && Math.random() > 0.6);
-      if (maintenanceSensor) {
-        sensorUpdates.push({
-          id: maintenanceSensor.id,
-          status: 'Online',
-          health: 'Active',
-          battery: Math.min(100, maintenanceSensor.battery + 30),
-          signal: Math.max(-72, maintenanceSensor.signal + 22),
-          lastDataTime: nowIso
-        });
-      }
-      // Occasionally flip active to degraded (not every tick)
-      const actives = state.sensors.filter(s => s.health === 'Active' && s.battery < 55);
-      if (actives.length && Math.random() > 0.7) {
-        const picked = actives[Math.floor(Math.random() * actives.length)];
-        sensorUpdates.push({
-          id: picked.id,
-          status: 'Degraded',
-          health: 'Maintenance Required',
-          lastDataTime: nowIso
-        });
-      }
-    }
+    // 2. Jitter edge mesh latency
+    const latencyMs = Math.floor(132 + Math.sin(this.tickCount / 6) * 14 + Math.random() * 8);
 
-    // 3. Micro-jitter latency and uptime (small variations, not jumpy)
-    const latencyMs = Math.floor(135 + Math.sin(this.tickCount / 7) * 12 + Math.random() * 6);
-
-    // 4. If Avinashi scenario is active, progressively escalate AVS sensors
-    const st = state;
-    if (st.activeScenario === 'avinashi_flood') {
+    // 3. If Avinashi scenario is active (for TN)
+    if (state.activeScenario === 'avinashi_flood' && state.loggedInStateId === 'TN') {
       this.avitick++;
       const stage = Math.min(5, this.avitick);
       const avinashiUpdates = [
-        { id: 'AVS-001', waterLevel: Number((1.9 + stage * 0.45).toFixed(2)), soilMoisture: 70 + stage * 5, risk: ['Low','Moderate','High','Critical','Critical','Critical'][stage] },
-        { id: 'AVS-002', waterLevel: Number((1.7 + stage * 0.38).toFixed(2)), soilMoisture: 66 + stage * 5, risk: ['Low','Low','Moderate','High','High','Critical'][stage] },
-        { id: 'AVS-003', waterLevel: Number((2.2 + stage * 0.42).toFixed(2)), soilMoisture: 72 + stage * 5, risk: ['Low','Moderate','High','High','Critical','Critical'][stage] },
-        { id: 'AVS-006', waterLevel: Number((1.8 + stage * 0.35).toFixed(2)), soilMoisture: 68 + stage * 4, risk: ['Low','Low','Moderate','High','High','High'][stage] },
-        { id: 'CBE-002', waterLevel: Number((2.3 + stage * 0.18).toFixed(2)), soilMoisture: 60 + stage * 3, risk: ['Moderate','Moderate','High','High','High','High'][stage] }
+        { id: 'TN-AVS-001', waterLevel: Number((1.9 + stage * 0.45).toFixed(2)), soilMoisture: 70 + stage * 5, risk: ['Low','Moderate','High','Critical','Critical','Critical'][stage] },
+        { id: 'TN-AVS-002', waterLevel: Number((1.7 + stage * 0.38).toFixed(2)), soilMoisture: 66 + stage * 5, risk: ['Low','Low','Moderate','High','High','Critical'][stage] },
+        { id: 'TN-AVS-003', waterLevel: Number((2.2 + stage * 0.42).toFixed(2)), soilMoisture: 72 + stage * 5, risk: ['Low','Moderate','High','High','Critical','Critical'][stage] },
+        { id: 'TN-AVS-006', waterLevel: Number((1.8 + stage * 0.35).toFixed(2)), soilMoisture: 68 + stage * 4, risk: ['Low','Low','Moderate','High','High','High'][stage] },
+        { id: 'TN-CBE-002', waterLevel: Number((2.3 + stage * 0.18).toFixed(2)), soilMoisture: 60 + stage * 3, risk: ['Moderate','Moderate','High','High','High','High'][stage] }
       ];
-      // Merge into sensorUpdates
+
       avinashiUpdates.forEach(au => {
         const existing = sensorUpdates.find(u => u.id === au.id);
         if (existing) Object.assign(existing, au);
         else sensorUpdates.push(au);
       });
-      // Fire one new progression alert at stage 2+
+
       if (this.avitick === 2 || this.avitick === 4) {
         const sev = this.avitick === 2 ? 'Warning' : 'Critical';
         store.addAlert({
-          id: 'ALT-AVS-' + this.tickCount,
+          id: 'ALT-TN-AVS-' + this.tickCount,
+          stateId: 'TN',
           hazard: 'Flood',
           severity: sev,
-          title: this.avitick === 2 ? 'Avinashi Flood Watch — Water Level Rising' : '🚨 AVS FLOOD EMERGENCY: Evacuate Low-Lying Zones',
-          location: 'Avinashi • Noyyal River Basin',
+          title: this.avitick === 2 ? 'Avinashi Flood Surge Progression' : '🚨 AVS FLOOD EMERGENCY: Evacuate Low-Lying Riverbed',
+          location: 'Avinashi • Noyyal River Gorge',
           timeAgo: 'Just now',
           timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-          aiConfidence: 91,
+          aiConfidence: 93,
           description: this.avitick === 2
-            ? 'Noyyal River water level rising 0.15 m/hr above flood watch threshold at 3.4 m.'
-            : 'Danger level (4.0 m) breached at AVS-001 Upstream. Sarkarsamakulam downstream inundation imminent.',
+            ? 'Noyyal River water level rising 0.20 m/hr above watch threshold at 3.0 m.'
+            : 'Danger level (3.8 m) breached at TN-AVS-001 Upstream. Sarkarsamakulam weir overflow imminent.',
           coordinates: [11.1920, 77.2050],
-          sensorId: 'AVS-001'
+          sensorId: 'TN-AVS-001'
         });
-        const aiUpdate = {
-          hazard: 'Flood',
-          riskScore: Math.min(99, 72 + stage * 6),
-          riskLevel: stage < 3 ? 'High' : 'Critical',
-          trend: '↗ Increasing (' + (stage * 0.25).toFixed(2) + 'm/hr)',
-          predictionText: `Avinashi Noyyal River basin flood progression stage ${stage}. Forecast crest in 45-60 mins at AVS-003.`,
-          factors: [
-            { name: 'Noyyal Gorge Gauge (AVS-001)', weight: 36, value: (1.9 + stage * 0.45).toFixed(2) + 'm', impact: stage < 3 ? 'high' : 'critical' },
-            { name: 'Coimbatore Upstream Rainfall', weight: 28, value: (28 + stage * 12) + ' mm/hr', impact: stage < 3 ? 'high' : 'critical' },
-            { name: 'Canal Gate Discharge', weight: 20, value: (180 + stage * 40) + ' m³/s', impact: 'high' },
-            { name: 'Soil Saturation (AVS-003)', weight: 16, value: (72 + stage * 5) + '%', impact: stage < 3 ? 'moderate' : 'high' }
-          ]
-        };
-        store.updateSimulation(null, null, aiUpdate);
       }
     }
 
-    // 5. Recompute KPI (totals based on expanded 20 sensor set)
-    const kpiUpdates = { latencyMs };
+    const kpiUpdates = {
+      latencyMs,
+      totalSensors: state.sensors.length,
+      onlineSensors: state.sensors.filter(s => s.status === 'Online').length
+    };
 
     store.updateSimulation(sensorUpdates, kpiUpdates, null);
   }
@@ -142,145 +105,136 @@ class SimulationEngine {
     this.avitick = 0;
     this.tickCount = 0;
 
-    // Switch focus to Avinashi for both modes and populate full situation data
-    store.setPublicLocation('avinashi');
-    if (state.selectedPublicLocation) {
-      state.selectedPublicLocation.riskLevel = 'High';
-      state.selectedPublicLocation.activeWarning = '🌊 Flood Warning — Coimbatore Upstream Surge Inflowing to Avinashi';
-      state.selectedPublicLocation.shortExplanation = 'Severe monsoon cloudburst over Coimbatore foothills has produced rapid runoff. Noyyal River water level at upstream gorge gauge AVS-001 has risen to 2.40m and is accelerating.';
-      if (state.selectedPublicLocation.environmental) {
-        state.selectedPublicLocation.environmental.waterLevel = '2.40 m';
-        state.selectedPublicLocation.environmental.rainfall = '42 mm/hr (Heavy Rain)';
-      }
-    }
-
-    // Baseline stage 1 updates
     const sensorUpdates = [
-      { id: 'AVS-001', waterLevel: 2.4, risk: 'High', soilMoisture: 76, temp: 26.0, lastDataTime: new Date().toISOString() },
-      { id: 'AVS-002', waterLevel: 2.2, risk: 'Moderate', soilMoisture: 72, lastDataTime: new Date().toISOString() },
-      { id: 'AVS-003', waterLevel: 2.8, risk: 'High', soilMoisture: 80, lastDataTime: new Date().toISOString() },
-      { id: 'AVS-006', waterLevel: 2.2, risk: 'Moderate', soilMoisture: 74, lastDataTime: new Date().toISOString() },
-      { id: 'CBE-002', waterLevel: 2.6, risk: 'High', soilMoisture: 66, lastDataTime: new Date().toISOString() }
+      { id: 'TN-AVS-001', waterLevel: 2.45, risk: 'High', soilMoisture: 76, temp: 26.0, lastDataTime: new Date().toISOString() },
+      { id: 'TN-AVS-002', waterLevel: 2.20, risk: 'Moderate', soilMoisture: 72, lastDataTime: new Date().toISOString() },
+      { id: 'TN-AVS-003', waterLevel: 2.80, risk: 'High', soilMoisture: 80, lastDataTime: new Date().toISOString() },
+      { id: 'TN-AVS-006', waterLevel: 2.15, risk: 'Moderate', soilMoisture: 74, lastDataTime: new Date().toISOString() },
+      { id: 'TN-CBE-002', waterLevel: 2.65, risk: 'High', soilMoisture: 66, lastDataTime: new Date().toISOString() }
     ];
 
     const aiUpdate = {
-      hazard: 'Flood',
-      riskScore: 82,
-      riskLevel: 'High',
-      trend: '↗ Increasing',
-      predictionText: 'Noyyal River levels rising after Coimbatore upstream cloudburst. Forecast crest 0.6m above danger level.',
+      hazard: 'Flood & Inundation',
+      riskScore: 86,
+      riskLevel: 'Critical',
+      trend: '↗ SURGING (+0.42m/hr)',
+      predictionText: 'Severe monsoon runoff in Coimbatore foothills accelerating towards Avinashi Noyyal weir. Crest projected in 35 mins.',
       factors: [
-        { name: 'Noyyal Gorge Gauge (AVS-001)', weight: 38, value: '2.4m / Warn 2.0m', impact: 'high' },
-        { name: 'Coimbatore Upstream Rainfall', weight: 30, value: '42 mm/hr (Heavy)', impact: 'high' },
-        { name: 'Dam Release Gates (CBE-002)', weight: 18, value: '220 m³/s', impact: 'moderate' },
-        { name: 'Downstream Soil Saturation', weight: 14, value: '80%', impact: 'high' }
+        { name: 'Noyyal Gorge Gauge (TN-AVS-001)', weight: 38, value: '2.45m / Warn 2.0m', impact: 'critical' },
+        { name: 'Coimbatore Upstream Rainfall', weight: 30, value: '58 mm/hr (Cloudburst)', impact: 'critical' },
+        { name: 'Canal Gate Inflow (TN-AVS-003)', weight: 18, value: '240 m³/s', impact: 'high' },
+        { name: 'Downstream Basin Saturation', weight: 14, value: '80%', impact: 'high' }
       ]
     };
 
     store.updateSimulation(sensorUpdates, { criticalIncidents: state.kpi.criticalIncidents + 1 }, aiUpdate);
 
     store.addAlert({
-      id: 'ALT-AVS-KICKOFF',
+      id: 'ALT-TN-DEMO-' + Date.now().toString().slice(-4),
+      stateId: 'TN',
       hazard: 'Flood',
-      severity: 'Warning',
-      title: 'Avinashi • Flood Initiated — Coimbatore Upstream Surge',
+      severity: 'Critical',
+      title: '🚨 CRITICAL FLASH INUNDATION: Coimbatore → Avinashi Runoff Surge',
       location: 'Avinashi (Tiruppur District)',
       timeAgo: 'Just now',
       timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-      aiConfidence: 90,
-      description: 'Upstream Noyyal River runoff has increased above watch levels. Sarkarsamakulam and lower canal at risk.',
-      coordinates: [11.1881, 77.2235],
-      sensorId: 'AVS-001'
+      aiConfidence: 94,
+      description: 'Noyyal River runoff crested upstream. Sarkarsamakulam weir and low-lying canals at critical risk.',
+      coordinates: [11.1920, 77.2050],
+      sensorId: 'TN-AVS-001'
     });
 
-    showToast('🌊 SIMULATION: Coimbatore → Avinashi Flood Scenario Activated!', 'crit');
-    store.notify('public_location_change', state.selectedPublicLocation);
-    store.notify('ui_mode_change', state.uiMode);
+    showToast('🌊 DEMO INJECTOR: Coimbatore → Avinashi Flood Scenario Activated!', 'crit');
   }
 
   triggerFlashFloodScenario() {
     const state = store.getState();
     state.activeScenario = 'flood';
 
-    const sensorUpdates = [
-      { id: 'N-003', waterLevel: 4.35, risk: 'Critical', soilMoisture: 97, temp: 23.2 },
-      { id: 'N-002', waterLevel: 3.10, risk: 'High', soilMoisture: 84 },
-      { id: 'N-006', soilMoisture: 98, risk: 'Critical' }
-    ];
+    const targetSensor = state.sensors.find(s => s.type === 'water') || state.sensors[0];
+    if (targetSensor) {
+      const sensorUpdates = [
+        { id: targetSensor.id, waterLevel: 4.15, risk: 'Critical', soilMoisture: 96, temp: 22.5 }
+      ];
 
-    const aiUpdate = {
-      hazard: 'Flood',
-      riskScore: 96,
-      riskLevel: 'Critical',
-      trend: '↗ SURGING (+1.2m/hr)',
-      predictionText: 'URGENT: Hydro-surge peak arriving at Vythiri Gorge in 35 mins. Expected inundation depth +1.4m above red danger level.',
-      factors: [
-        { name: 'Upstream Hydro Level (Sensor N-003)', weight: 45, value: '4.35m / Danger 3.2m', impact: 'critical' },
-        { name: 'Catchment Cloudburst Intensity', weight: 32, value: '118 mm/hr', impact: 'critical' },
-        { name: 'Inundation Velocity', weight: 14, value: '+0.88 m/hr', impact: 'critical' },
-        { name: 'Catchment Soil Saturation', weight: 9, value: '98% (Saturated)', impact: 'high' }
-      ]
-    };
+      const aiUpdate = {
+        hazard: 'Flash Flood',
+        riskScore: 95,
+        riskLevel: 'Critical',
+        trend: '↗ SURGING (+0.85m/hr)',
+        predictionText: 'URGENT: Peak hydro-surge cresting within 30 minutes. River catchment capacity exceeded.',
+        factors: [
+          { name: `Hydro Sensor (${targetSensor.id})`, weight: 44, value: '4.15m / Danger 3.2m', impact: 'critical' },
+          { name: 'Catchment Rainfall Intensity', weight: 32, value: '92 mm/hr (Extreme)', impact: 'critical' },
+          { name: 'Runoff Acceleration Rate', weight: 14, value: '+0.85 m/hr', impact: 'critical' },
+          { name: 'Catchment Soil Saturation', weight: 10, value: '96% (Saturated)', impact: 'high' }
+        ]
+      };
 
-    store.updateSimulation(sensorUpdates, { criticalIncidents: state.kpi.criticalIncidents + 1 }, aiUpdate);
+      store.updateSimulation(sensorUpdates, { criticalIncidents: state.kpi.criticalIncidents + 1 }, aiUpdate);
 
-    store.addAlert({
-      id: 'ALT-' + Math.floor(1000 + Math.random() * 9000),
-      hazard: 'Flood',
-      severity: 'Critical',
-      title: '🚨 CRITICAL FLASH FLOOD SURGE TRIGGERED',
-      location: 'District X • Gorge Pass Sector C',
-      timeAgo: 'Just now',
-      timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-      aiConfidence: 98,
-      description: 'Runoff from Chembra catchment cresting. Inundation buffer expanding rapidly.',
-      coordinates: [11.662, 76.115],
-      sensorId: 'N-003'
-    });
+      store.addAlert({
+        id: 'ALT-' + Math.floor(1000 + Math.random() * 9000),
+        stateId: state.loggedInStateId,
+        hazard: 'Flash Flood',
+        severity: 'Critical',
+        title: `🚨 CRITICAL HYDRO-SURGE BREACH — ${targetSensor.location}`,
+        location: `${targetSensor.location}`,
+        timeAgo: 'Just now',
+        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+        aiConfidence: 96,
+        description: `Extreme water level elevation recorded at sensor ${targetSensor.id}. Rapid evacuation protocols active.`,
+        coordinates: [targetSensor.lat, targetSensor.lng],
+        sensorId: targetSensor.id
+      });
 
-    showToast('🚨 SIMULATION: Flash Flood Surge Triggered in District X! Gauge N-003 at 4.35m.', 'crit');
+      showToast(`🚨 DEMO INJECTOR: Critical Flash Flood Triggered at ${targetSensor.name}!`, 'crit');
+    }
   }
 
   triggerWildfireScenario() {
     const state = store.getState();
     state.activeScenario = 'fire';
 
-    const sensorUpdates = [
-      { id: 'N-011', temp: 48.2, hum: 14, pm25: 340, risk: 'Critical' },
-      { id: 'N-004', temp: 43.1, hum: 21, pm25: 220, risk: 'Critical' }
-    ];
+    const targetSensor = state.sensors.find(s => s.type === 'heat' || s.type === 'air') || state.sensors[0];
+    if (targetSensor) {
+      const sensorUpdates = [
+        { id: targetSensor.id, temp: 47.8, hum: 15, pm25: 310, risk: 'Critical' }
+      ];
 
-    const aiUpdate = {
-      hazard: 'Forest Fire',
-      riskScore: 93,
-      riskLevel: 'Critical',
-      trend: '↗ EXPANDING (Wind 34 km/h)',
-      predictionText: 'High thermal plume detected at Zone Y. Rapid flame front advancing towards eastern wildlife perimeter corridor.',
-      factors: [
-        { name: 'Surface Thermal Signature (N-011)', weight: 42, value: '48.2°C (Extreme)', impact: 'critical' },
-        { name: 'Relative Humidity Deficit', weight: 28, value: '14% (Severe Drought)', impact: 'critical' },
-        { name: 'Wind Velocity & Direction', weight: 18, value: '34 km/h NE Gusts', impact: 'high' },
-        { name: 'Fuel Moisture Index', weight: 12, value: '8.4% (Highly Combustible)', impact: 'high' }
-      ]
-    };
+      const aiUpdate = {
+        hazard: 'Forest Fire',
+        riskScore: 92,
+        riskLevel: 'Critical',
+        trend: '↗ EXPANDING (Wind 32 km/h)',
+        predictionText: `High thermal radiance and particulate spike at ${targetSensor.location}. Rapid flame propagation modeled.`,
+        factors: [
+          { name: `Surface Thermal Node (${targetSensor.id})`, weight: 42, value: '47.8°C (Extreme)', impact: 'critical' },
+          { name: 'Relative Humidity Deficit', weight: 28, value: '15% (Severe Drought)', impact: 'critical' },
+          { name: 'Wind Velocity Gusts', weight: 18, value: '32 km/h NE', impact: 'high' },
+          { name: 'Particulate Inversion PM2.5', weight: 12, value: '310 µg/m³', impact: 'high' }
+        ]
+      };
 
-    store.updateSimulation(sensorUpdates, { criticalIncidents: state.kpi.criticalIncidents + 1 }, aiUpdate);
+      store.updateSimulation(sensorUpdates, { criticalIncidents: state.kpi.criticalIncidents + 1 }, aiUpdate);
 
-    store.addAlert({
-      id: 'ALT-' + Math.floor(1000 + Math.random() * 9000),
-      hazard: 'Forest Fire',
-      severity: 'Critical',
-      title: '🔥 RAPID WILDFIRE SPREAD DETECTED',
-      location: 'Zone Y • Bandipur Forest Perimeter',
-      timeAgo: 'Just now',
-      timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-      aiConfidence: 95,
-      description: 'Thermal radiance 48.2°C. Drone 02 alerted for airborne flame surveillance.',
-      coordinates: [11.765, 76.245],
-      sensorId: 'N-011'
-    });
+      store.addAlert({
+        id: 'ALT-' + Math.floor(1000 + Math.random() * 9000),
+        stateId: state.loggedInStateId,
+        hazard: 'Forest Fire',
+        severity: 'Critical',
+        title: `🔥 RAPID WILDFIRE SPREAD — ${targetSensor.location}`,
+        location: `${targetSensor.location}`,
+        timeAgo: 'Just now',
+        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+        aiConfidence: 94,
+        description: `Extreme thermal anomaly (+47.8°C). Drone reconnaissance and firebreak squads alerted.`,
+        coordinates: [targetSensor.lat, targetSensor.lng],
+        sensorId: targetSensor.id
+      });
 
-    showToast('🔥 SIMULATION: Wildfire Outbreak in Zone Y! Extreme thermal anomaly detected.', 'crit');
+      showToast(`🔥 DEMO INJECTOR: Thermal Anomaly & Fire Spread Triggered at ${targetSensor.name}!`, 'crit');
+    }
   }
 
   resetBaselineScenario() {
@@ -288,33 +242,31 @@ class SimulationEngine {
     state.activeScenario = 'baseline';
     this.avitick = 0;
 
-    const sensorUpdates = [
-      { id: 'N-003', waterLevel: 2.8, risk: 'Moderate', soilMoisture: 72, temp: 28.5, lastDataTime: new Date().toISOString() },
-      { id: 'N-011', temp: 34.2, hum: 42, pm25: 65, risk: 'Moderate', lastDataTime: new Date().toISOString() },
-      { id: 'N-002', waterLevel: 2.1, risk: 'Low', soilMoisture: 55, lastDataTime: new Date().toISOString() },
-      { id: 'AVS-001', waterLevel: 1.9, risk: 'Low', soilMoisture: 60, lastDataTime: new Date().toISOString() },
-      { id: 'AVS-002', waterLevel: 1.6, risk: 'Low', soilMoisture: 58, lastDataTime: new Date().toISOString() },
-      { id: 'AVS-003', waterLevel: 2.2, risk: 'Low', soilMoisture: 62, lastDataTime: new Date().toISOString() },
-      { id: 'AVS-006', waterLevel: 1.8, risk: 'Low', soilMoisture: 56, lastDataTime: new Date().toISOString() },
-      { id: 'CBE-002', waterLevel: 2.2, risk: 'Moderate', soilMoisture: 52, lastDataTime: new Date().toISOString() }
-    ];
+    // Reset sensor state to baseline nominal
+    state.sensors.forEach(s => {
+      s.risk = 'Low';
+      s.status = 'Online';
+      if (s.waterLevel) s.waterLevel = 1.8;
+      if (s.temp) s.temp = 27.0;
+      if (s.pm25) s.pm25 = 40;
+    });
 
     const aiUpdate = {
-      hazard: 'Flood',
-      riskScore: 58,
+      hazard: 'Multi-Hazard Baseline',
+      riskScore: 52,
       riskLevel: 'Low',
       trend: '→ Stabilized',
-      predictionText: 'Environmental metrics returning to normal seasonal threshold bands across all regional sensor networks.',
+      predictionText: 'Environmental metrics operating within safe seasonal tolerance bands across all monitored districts.',
       factors: [
-        { name: 'Upstream Hydro Level', weight: 30, value: '2.8m (Nominal)', impact: 'moderate' },
-        { name: 'Catchment Precipitation', weight: 25, value: '18 mm/hr (Light)', impact: 'low' },
-        { name: 'Rate of Rise', weight: 20, value: '+0.05 m/hr (Stable)', impact: 'low' },
-        { name: 'Historical Model Norm', weight: 25, value: 'Within standard deviation', impact: 'low' }
+        { name: 'Hydro Inflow Telemetry', weight: 35, value: 'Nominal Basin Discharge', impact: 'low' },
+        { name: 'Catchment Rainfall Rate', weight: 25, value: 'Light / Moderate', impact: 'low' },
+        { name: 'Thermal Anomaly Model', weight: 20, value: 'Within Standard Deviation', impact: 'low' },
+        { name: 'Atmospheric Dispersion', weight: 20, value: 'Good Air Quality', impact: 'low' }
       ]
     };
 
-    store.updateSimulation(sensorUpdates, { criticalIncidents: 2 }, aiUpdate);
-    showToast('✅ SIMULATION: Environmental conditions restored to nominal baseline.', 'info');
+    store.updateSimulation(state.sensors, { criticalIncidents: 1 }, aiUpdate);
+    showToast('✅ SIMULATION: Environmental telemetry restored to nominal baseline.', 'info');
   }
 }
 

@@ -68,6 +68,11 @@ export function createAnalyticsView(initialTab = 'analytics') {
   }
 
   function renderAnalyticsTabHTML() {
+    const state = store.getState();
+    const districtOptions = (state.districts && state.districts.length > 0)
+      ? state.districts.map(d => `<option value="${d}">${d} District Basin</option>`).join('')
+      : `<option value="all">All Catchment Basins</option>`;
+
     return `
       <!-- Analytics Filter Bar -->
       <div class="scenario-bar" style="border-left-color: var(--color-primary); margin-bottom: 20px;">
@@ -75,10 +80,8 @@ export function createAnalyticsView(initialTab = 'analytics') {
           <div class="filter-select-item">
             <span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary);">Catchment:</span>
             <select id="analytics-location" style="background: #FFFFFF; border: 1px solid var(--color-border); padding: 5px 8px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;">
-              <option value="all">All Catchment Regions</option>
-              <option value="dist_x" selected>District X (Catchment Basin)</option>
-              <option value="zone_y">Zone Y (Forest Foothills)</option>
-              <option value="dist_z">District Center Z (Metropolitan)</option>
+              <option value="all">All ${state.loggedInStateName || 'State'} Catchment Regions</option>
+              ${districtOptions}
             </select>
           </div>
 
@@ -243,6 +246,17 @@ export function createAnalyticsView(initialTab = 'analytics') {
   }
 
   function renderReportsTabHTML(state) {
+    const stateName = (state.loggedInStateName || 'Tamil Nadu').toUpperCase();
+    const stateId = state.loggedInState || 'TN';
+    const officerName = state.currentUser ? state.currentUser.name : 'Authorized Officer';
+    const officerRole = state.currentUser ? state.currentUser.role : 'Incident Commander';
+
+    const defaultRegion = state.districts && state.districts.length > 0 ? `${state.districts[0]} Basin` : `${state.loggedInStateName || 'State'} Catchment`;
+
+    const districtOptions = (state.districts && state.districts.length > 0)
+      ? state.districts.map(d => `<option value="${d} Basin">${d} Basin</option>`).join('')
+      : `<option value="${defaultRegion}">${defaultRegion}</option>`;
+
     return `
       <!-- Generator Config Bar -->
       <div class="scenario-bar" style="border-left-color: var(--color-primary); margin-bottom: 20px;">
@@ -250,19 +264,18 @@ export function createAnalyticsView(initialTab = 'analytics') {
           <div class="filter-select-item">
             <span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary);">Target Catchment:</span>
             <select id="rep-region" style="background: #FFFFFF; border: 1px solid var(--color-border); padding: 5px 8px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;">
-              <option value="District X (Catchment Basin)" selected>District X (Catchment Basin)</option>
-              <option value="Zone Y (Forest Foothills)">Zone Y (Forest Foothills)</option>
-              <option value="Western Ghats Corridor">Western Ghats Corridor</option>
-              <option value="All Monitored Regions">All Monitored Regions</option>
+              <option value="All Monitored ${state.loggedInStateName || 'State'} Basins">All Monitored ${state.loggedInStateName || 'State'} Basins</option>
+              ${districtOptions}
             </select>
           </div>
 
           <div class="filter-select-item">
             <span style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary);">Hazard Scope:</span>
             <select id="rep-hazard" style="background: #FFFFFF; border: 1px solid var(--color-border); padding: 5px 8px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;">
-              <option value="All Multi-Hazards" selected>All Multi-Hazards (Flood, Fire, AQI, Heat)</option>
+              <option value="All Multi-Hazards" selected>All Multi-Hazards (Flood, Fire, AQI, Landslide)</option>
               <option value="Flood & Inundation Only">Flood & Inundation Only</option>
               <option value="Wildfire Hotspots Only">Wildfire Hotspots Only</option>
+              <option value="Landslide & Slope Instability">Landslide & Slope Instability</option>
             </select>
           </div>
 
@@ -290,18 +303,18 @@ export function createAnalyticsView(initialTab = 'analytics') {
       <div class="report-paper" id="printable-report-canvas">
         <div class="report-header-band">
           <div>
-            <div class="report-org-title">STATE DISASTER MANAGEMENT AUTHORITY (SDMA)</div>
+            <div class="report-org-title">${stateName} STATE DISASTER MANAGEMENT AUTHORITY (SDMA)</div>
             <div class="report-subhead">
               ENVIRONMENTAL INTELLIGENCE & MULTI-HAZARD EARLY WARNING BRIEF
             </div>
             <div style="font-size: 11px; color: var(--color-text-muted); margin-top: 4px;">
-              Document ID: SDMA-EOC-2026-0908-FLD • Classification: <strong>OFFICIAL USE ONLY</strong>
+              Document ID: SDMA-${stateId}-EOC-2026-0908-FLD • Classification: <strong>OFFICIAL USE ONLY</strong>
             </div>
           </div>
 
           <div style="text-align: right; font-size: 12px; color: var(--color-text-secondary);">
             <div>Generated: <strong>${formatDate()}</strong></div>
-            <div>Authorizing Officer: <strong>District Magistrate (Incident Commander)</strong></div>
+            <div>Authorizing Officer: <strong>${officerName} (${officerRole})</strong></div>
           </div>
         </div>
 
@@ -391,11 +404,11 @@ export function createAnalyticsView(initialTab = 'analytics') {
         <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid var(--color-border); padding-top: 18px; margin-top: 24px; font-size: 11px; color: var(--color-text-muted);">
           <div>
             <div>Digital Signature: <code>SHA-256: 8f92a4e17...b7c09</code></div>
-            <div>Transmission: Integrated State Disaster Management Authority Mesh</div>
+            <div>Transmission: Integrated ${stateName} State Disaster Management Authority Mesh</div>
           </div>
           <div style="text-align: right;">
-            <div style="font-weight: 700; color: var(--color-primary-dark);">DISTRICT EMERGENCY OPERATIONS CENTER (EOC)</div>
-            <div>Incident Command Division</div>
+            <div style="font-weight: 700; color: var(--color-primary-dark);">${stateName} STATE EMERGENCY OPERATIONS CENTER (SEOC)</div>
+            <div>Incident Command & Early Warning Division</div>
           </div>
         </div>
       </div>

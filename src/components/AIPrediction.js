@@ -1,7 +1,7 @@
-// AI Predictive Risk Intelligence & Explainable AI (XAI) Component
+// AI Predictive Risk Intelligence & Explainable AI (XAI) Component (State Scoped)
 
 import { store } from '../state/store.js';
-import { getRiskClass, getHazardTagClass } from '../utils/formatters.js';
+import { getRiskClass } from '../utils/formatters.js';
 
 export function createAIPredictionView() {
   const container = document.createElement('div');
@@ -18,6 +18,8 @@ export function createAIPredictionView() {
 
   function render() {
     const state = store.getState();
+    const stateName = state.loggedInState || 'Tamil Nadu';
+    const stateConfig = store.getAuthorizedStateConfig();
     const dynamicScore = calculateDynamicRisk();
     const dynamicLevel = dynamicScore >= 80 ? 'Critical' : dynamicScore >= 60 ? 'High' : dynamicScore >= 40 ? 'Moderate' : 'Low';
 
@@ -25,15 +27,26 @@ export function createAIPredictionView() {
       <div class="view-header-row">
         <div>
           <h1 class="view-title-main">
-            <span>🤖 AI PREDICTIVE RISK INTELLIGENCE</span>
+            <span>🤖 ${stateName.toUpperCase()} AI PREDICTIVE RISK INTELLIGENCE</span>
             <span class="status-badge critical">XAI NEURAL ENSEMBLE</span>
           </h1>
-          <p class="view-desc-sub">Explainable AI feature attribution (SHAP), multi-horizon risk trajectories, and real-time parameter scenario simulation</p>
+          <p class="view-desc-sub">Explainable AI feature attribution (SHAP), multi-horizon risk trajectories, and decision-support simulation for ${stateName}</p>
         </div>
         <div class="view-actions-group">
-          <button class="btn-primary" onclick="window.appStore.setView('incidents')">
+          <button class="btn-primary" onclick="window.location.hash = '#incidents'">
             <span>Escalate Pre-Emptive SOP</span>
           </button>
+        </div>
+      </div>
+
+      <!-- Critical Architecture Notice: Local Deterministic Safety Rule Independent of Cloud AI -->
+      <div style="background: var(--color-surface); border: 1px solid var(--color-border); border-left: 4px solid var(--color-primary); border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; font-size: 12px;">
+        <span style="font-size: 20px;">🛡️</span>
+        <div>
+          <strong style="color: var(--color-primary-dark);">CRITICAL SAFETY ARCHITECTURE:</strong>
+          <span style="color: var(--color-text-secondary); margin-left: 4px;">
+            AI models serve exclusively as <strong>decision-support analytics</strong>. Local edge sensor nodes execute deterministic threshold alarms autonomously, ensuring immediate warning sirens trigger without dependence on cloud connectivity or AI availability.
+          </span>
         </div>
       </div>
 
@@ -42,7 +55,7 @@ export function createAIPredictionView() {
         <div class="gov-card">
           <div class="gov-card-header">
             <div class="gov-card-title">
-              <span>🌊 Target Threat: Flash Flood Inundation Index</span>
+              <span>🌊 Target Threat: ${state.aiPrediction.hazard}</span>
             </div>
             <span class="ai-confidence-pill">CONFIDENCE: 94.6%</span>
           </div>
@@ -54,14 +67,14 @@ export function createAIPredictionView() {
                   🌊
                 </div>
                 <div>
-                  <div style="font-size: 11px; text-transform: uppercase; color: var(--color-text-secondary); font-weight: 700;">Monitored Catchment</div>
-                  <div style="font-size: 18px; font-weight: 800; color: var(--color-primary-dark);">District X • Vythiri Basin</div>
+                  <div style="font-size: 11px; text-transform: uppercase; color: var(--color-text-secondary); font-weight: 700;">Monitored Jurisdiction</div>
+                  <div style="font-size: 18px; font-weight: 800; color: var(--color-primary-dark);">${stateName} • ${stateConfig.districts[0]?.name || 'Primary Corridor'}</div>
                   <div style="font-size: 12px; color: var(--color-primary); font-weight: 600;">Prediction Horizon: Next 3 to 6 Hours</div>
                 </div>
               </div>
 
               <div style="text-align: right;">
-                <div style="font-size: 11px; color: var(--color-text-muted); text-transform: uppercase;">Current AI Risk</div>
+                <div style="font-size: 11px; color: var(--color-text-muted); text-transform: uppercase;">State AI Index</div>
                 <div style="font-family: var(--font-display); font-size: 34px; font-weight: 800; color: var(--color-critical); line-height: 1;">${state.aiPrediction.riskScore}%</div>
                 <span class="status-badge ${getRiskClass(state.aiPrediction.riskLevel)}" style="margin-top: 4px;">
                   ${state.aiPrediction.riskLevel}
@@ -97,7 +110,7 @@ export function createAIPredictionView() {
             </div>
 
             <div style="margin-top: 20px; padding: 12px; background: var(--color-surface-soft); border-radius: var(--radius-sm); border: 1px solid var(--color-border); font-size: 12px; color: var(--color-text-secondary);">
-              <strong>💡 Model Explainability Rationale:</strong> The recurrent LSTM ensemble weights upstream hydro-level (Gauge N-003) as the most critical trigger (+38%), compounded by heavy monsoon precipitation rate (84 mm/hr) exceeding the catchment absorption capacity.
+              <strong>💡 Model Rationale:</strong> The recurrent LSTM network correlates catchment precipitation rate and edge sensor telemetry against historical 10-year monsoon records in ${stateName}.
             </div>
           </div>
         </div>
@@ -109,37 +122,34 @@ export function createAIPredictionView() {
               <div class="gov-card-title">
                 <span>🎛️ "What-If" Scenario Simulator</span>
               </div>
-              <span class="status-badge info">INTERACTIVE</span>
+              <span class="status-badge info">DECISION SUPPORT</span>
             </div>
 
             <div class="gov-card-body">
               <p style="font-size: 12px; color: var(--color-text-muted); margin-bottom: 16px;">
-                Adjust environmental parameters to see live AI neural model risk recalculation in real-time:
+                Simulate environmental parameter shifts to observe model trajectory recalculation:
               </p>
 
               <div style="display: flex; flex-direction: column; gap: 16px;">
-                <!-- Slider 1 -->
                 <div>
                   <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
-                    <span style="color: var(--color-text-secondary);">🌧️ Catchment Rainfall:</span>
+                    <span style="color: var(--color-text-secondary);">🌧️ Catchment Precipitation:</span>
                     <strong style="font-family: var(--font-mono); color: var(--color-primary);" id="slider-val-rain">${simulatedRainfall} mm/hr</strong>
                   </div>
                   <input type="range" min="0" max="150" value="${simulatedRainfall}" id="slider-rain" style="width: 100%; accent-color: var(--color-primary); cursor: pointer;">
                 </div>
 
-                <!-- Slider 2 -->
                 <div>
                   <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
-                    <span style="color: var(--color-text-secondary);">🌊 Upstream Dam Release:</span>
+                    <span style="color: var(--color-text-secondary);">🌊 Upstream Sluice Discharge:</span>
                     <strong style="font-family: var(--font-mono); color: var(--color-primary);" id="slider-val-dam">${simulatedDamRelease} m³/s</strong>
                   </div>
                   <input type="range" min="0" max="800" value="${simulatedDamRelease}" id="slider-dam" style="width: 100%; accent-color: var(--color-primary); cursor: pointer;">
                 </div>
 
-                <!-- Slider 3 -->
                 <div>
                   <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
-                    <span style="color: var(--color-text-secondary);">🌱 Soil Saturation:</span>
+                    <span style="color: var(--color-text-secondary);">🌱 Catchment Soil Saturation:</span>
                     <strong style="font-family: var(--font-mono); color: var(--color-primary);" id="slider-val-soil">${simulatedSoilSat}%</strong>
                   </div>
                   <input type="range" min="20" max="100" value="${simulatedSoilSat}" id="slider-soil" style="width: 100%; accent-color: var(--color-primary); cursor: pointer;">
@@ -159,31 +169,23 @@ export function createAIPredictionView() {
             </div>
           </div>
 
-          <!-- Multi-Hazard Cross Risk Matrix -->
+          <!-- Multi-District Cross Risk -->
           <div class="gov-card">
             <div class="gov-card-header">
               <div class="gov-card-title">
-                <span>🌐 Multi-Hazard Cross Correlation</span>
+                <span>🌐 Monitored Sector Correlation (${stateName})</span>
               </div>
             </div>
             <div class="gov-card-body" style="padding: 14px 18px;">
               <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span>🌊 Flood Inundation (District X)</span>
-                  <span class="status-badge critical">87% RISK</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span>⛰️ Slope Creep (Meppadi)</span>
-                  <span class="status-badge high">64% RISK</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span>🔥 Forest Fire (Zone Y)</span>
-                  <span class="status-badge moderate">34% RISK</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span>🌫️ Urban AQI (District Center Z)</span>
-                  <span class="status-badge high">58% RISK</span>
-                </div>
+                ${stateConfig.districts.map((d, i) => `
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>📍 ${d.name}</span>
+                    <span class="status-badge ${i === 0 ? 'critical' : i === 1 ? 'high' : 'moderate'}">
+                      ${i === 0 ? '84% RISK' : i === 1 ? '68% RISK' : '42% RISK'}
+                    </span>
+                  </div>
+                `).join('')}
               </div>
             </div>
           </div>
@@ -218,9 +220,9 @@ export function createAIPredictionView() {
       }
     }
 
-    rainSlider.addEventListener('input', updateSimulationDisplay);
-    damSlider.addEventListener('input', updateSimulationDisplay);
-    soilSlider.addEventListener('input', updateSimulationDisplay);
+    rainSlider?.addEventListener('input', updateSimulationDisplay);
+    damSlider?.addEventListener('input', updateSimulationDisplay);
+    soilSlider?.addEventListener('input', updateSimulationDisplay);
   }
 
   render();

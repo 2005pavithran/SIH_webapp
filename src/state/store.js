@@ -1,82 +1,75 @@
-// Global Reactive Application Store
+// Global Reactive Application Store with State Authority Data Isolation
 
 import {
-  INITIAL_ALERTS,
-  INITIAL_SENSORS,
-  INITIAL_INCIDENTS,
-  RESPONSE_TEAMS,
-  RELIEF_SHELTERS,
-  AI_PREDICTION_FACTORS,
-  REGIONS,
-  PUBLIC_LOCATIONS
+  STATES_CONFIG,
+  ALL_SENSORS,
+  ALL_ALERTS,
+  ALL_INCIDENTS,
+  ALL_TEAMS,
+  ALL_SHELTERS,
+  STATE_HAZARD_ZONES,
+  STATE_AI_PREDICTIONS,
+  NATIONAL_OVERVIEW
 } from '../utils/mockData.js';
 import { audioAlert } from '../utils/audioAlert.js';
 
 class AppStore {
   constructor() {
+    // Default unauthenticated landing state
     this.state = {
-      currentView: 'dashboard', // dashboard, live-map, risk-map, dynamic-risk, alerts, ai-prediction, sensors, analytics, incidents, teams, reports, settings, staff-services, public
+      authenticated: false,
+      loggedInState: 'Tamil Nadu',
+      loggedInStateId: 'TN',
+      loggedInOfficerRole: 'STATE_AUTHORITY',
       selectedRegionId: 'avinashi',
+      uiMode: 'LANDING', // LANDING | OPERATIONAL
+      currentView: 'landing', // landing, dashboard, risk-map, dynamic-risk, alerts, ai-prediction, sensors, analytics, incidents, reports, staff-services, settings
       soundEnabled: true,
-      uiMode: 'AUTHORITY', // PUBLIC | AUTHORITY
-      selectedPublicLocation: JSON.parse(JSON.stringify(PUBLIC_LOCATIONS[0])),
-      publicLocations: JSON.parse(JSON.stringify(PUBLIC_LOCATIONS)),
-      
-      // Live Data
-      alerts: JSON.parse(JSON.stringify(INITIAL_ALERTS)),
-      sensors: JSON.parse(JSON.stringify(INITIAL_SENSORS)),
-      incidents: JSON.parse(JSON.stringify(INITIAL_INCIDENTS)),
-      teams: JSON.parse(JSON.stringify(RESPONSE_TEAMS)),
-      shelters: JSON.parse(JSON.stringify(RELIEF_SHELTERS)),
-      
-      // Active Map Layers
+
+      // Live Scoped Operational Data
+      alerts: JSON.parse(JSON.stringify(ALL_ALERTS.filter(a => a.stateId === 'TN'))),
+      sensors: JSON.parse(JSON.stringify(ALL_SENSORS.filter(s => s.stateId === 'TN'))),
+      incidents: JSON.parse(JSON.stringify(ALL_INCIDENTS.filter(i => i.stateId === 'TN'))),
+      teams: JSON.parse(JSON.stringify(ALL_TEAMS.filter(t => t.stateId === 'TN'))),
+      shelters: JSON.parse(JSON.stringify(ALL_SHELTERS.filter(s => s.stateId === 'TN'))),
+
+      // Active Map Layer Toggles
       mapLayers: {
         fire: true,
         flood: true,
         air: true,
         heat: true,
-        water: true,
         sensors: true,
         teams: true,
         shelters: true
       },
 
       // AI Risk Intelligence State
-      aiPrediction: {
-        hazard: 'Flood',
-        riskScore: 87,
-        riskLevel: 'Critical',
-        trend: '↗ Increasing',
-        predictionText: 'Risk likely to increase over next 3 hours with upstream runoff peaking at 21:00.',
-        factors: JSON.parse(JSON.stringify(AI_PREDICTION_FACTORS))
-      },
+      aiPrediction: JSON.parse(JSON.stringify(STATE_AI_PREDICTIONS.TN)),
 
-      // Top Statistics
+      // Top Operational Statistics (State Scoped)
       kpi: {
-        totalSensors: 20,
-        onlineSensors: 17,
-        activeAlerts: 12,
-        criticalIncidents: 4,
-        uptime: 96.8,
+        totalSensors: ALL_SENSORS.filter(s => s.stateId === 'TN').length,
+        onlineSensors: ALL_SENSORS.filter(s => s.stateId === 'TN' && s.status === 'Online').length,
+        activeAlerts: ALL_ALERTS.filter(a => a.stateId === 'TN').length,
+        criticalIncidents: ALL_INCIDENTS.filter(i => i.stateId === 'TN' && i.status === 'ACTIVE').length,
+        uptime: 98.4,
         latencyMs: 142
       },
 
-      // Selected items for modal drilldowns
+      // Drilldown Selection State
       selectedSensor: null,
       selectedIncident: null,
       selectedAlert: null,
       activeScenario: 'baseline',
 
-      // Map footer ticker queue
+      // Map Ticker Feed
       tickerMessages: [
-        'Noyyal River discharge above seasonal norm — flood watch active for Avinashi downstream',
-        'Rainfall: 14.2 mm/hr recorded at Coimbatore upstream station',
-        'Shelter capacity: 1,450 of 4,800 occupied (30%)',
-        'NDRF Team 04 deployed to Vythiri sector — ETA 9 min',
-        'IN-SAT 3DR cloud imagery sync: 04 minutes ago',
-        'Dam release: 220 m³/s — 4 gates at 0.8m height',
-        'Traffic advisory: NH-544 Coonoor Ghat closed due to landslide risk',
-        'PM2.5 levels improving in western corridor — 18 µg/m³'
+        'Noyyal River discharge monitoring active for Avinashi & Coimbatore downstream',
+        'INSAT-3DR satellite multi-spectral cloud imagery updated 3 mins ago',
+        'State EOC Telemetry Mesh latency nominal: 142ms across edge nodes',
+        'NDRF Rapid Assessment Unit on standby for high-risk catchment corridors',
+        'Soil saturation telemetry synced via LoRaWAN edge transceivers'
       ]
     };
 
@@ -93,51 +86,203 @@ class AppStore {
   }
 
   notify(event, payload) {
-    this.listeners.forEach(fn => fn(this.state, event, payload));
+    this.listeners.forEach(fn => {
+      try {
+        fn(this.state, event, payload);
+      } catch (err) {
+        console.error(`Error in store subscriber for event "${event}":`, err);
+      }
+    });
   }
+
+  // ========================================================================
+  // STATE AUTHORITY AUTHENTICATION & SESSION MANAGEMENT
+  // ========================================================================
+
+  loginStateAuthority(stateId, role = 'STATE_AUTHORITY', credentials = '') {
+    const targetState = STATES_CONFIG.find(s => s.id === stateId) || STATES_CONFIG[0];
+    
+    // Establish authorized session
+    this.state.authenticated = true;
+    this.state.loggedInState = targetState.name;
+    this.state.loggedInStateId = targetState.id;
+    this.state.loggedInOfficerRole = role;
+    this.state.selectedRegionId = targetState.districts[0]?.id || 'default';
+    this.state.uiMode = 'OPERATIONAL';
+    this.state.currentView = 'dashboard';
+
+    // Strictly load & filter data for the authenticated jurisdiction
+    this.loadStateScopedData(targetState.id);
+
+    this.notify('auth_login', { stateId: targetState.id, stateName: targetState.name, role });
+    this.notify('view_change', 'dashboard');
+    return true;
+  }
+
+  logoutAuthority() {
+    this.state.authenticated = false;
+    this.state.loggedInState = null;
+    this.state.loggedInStateId = null;
+    this.state.loggedInOfficerRole = null;
+    this.state.uiMode = 'LANDING';
+    this.state.currentView = 'landing';
+    this.state.activeScenario = 'baseline';
+
+    this.notify('auth_logout', null);
+    this.notify('view_change', 'landing');
+  }
+
+  loadStateScopedData(stateId) {
+    // 1. Scoped Sensors
+    this.state.sensors = JSON.parse(JSON.stringify(ALL_SENSORS.filter(s => s.stateId === stateId)));
+    if (this.state.sensors.length === 0) {
+      // Fallback generator for states without explicit manual nodes
+      this.state.sensors = this.generateSyntheticSensorsForState(stateId);
+    }
+
+    // 2. Scoped Alerts
+    this.state.alerts = JSON.parse(JSON.stringify(ALL_ALERTS.filter(a => a.stateId === stateId)));
+    if (this.state.alerts.length === 0) {
+      this.state.alerts = this.generateSyntheticAlertsForState(stateId);
+    }
+
+    // 3. Scoped Incidents
+    this.state.incidents = JSON.parse(JSON.stringify(ALL_INCIDENTS.filter(i => i.stateId === stateId)));
+    if (this.state.incidents.length === 0) {
+      this.state.incidents = this.generateSyntheticIncidentsForState(stateId);
+    }
+
+    // 4. Scoped Teams & Shelters
+    this.state.teams = JSON.parse(JSON.stringify(ALL_TEAMS.filter(t => t.stateId === stateId)));
+    this.state.shelters = JSON.parse(JSON.stringify(ALL_SHELTERS.filter(s => s.stateId === stateId)));
+
+    // 5. Scoped AI Model
+    this.state.aiPrediction = JSON.parse(JSON.stringify(
+      STATE_AI_PREDICTIONS[stateId] || STATE_AI_PREDICTIONS.TN
+    ));
+
+    // 6. Recompute KPI
+    const onlineCount = this.state.sensors.filter(s => s.status === 'Online').length;
+    const critIncidents = this.state.incidents.filter(i => i.status === 'ACTIVE').length;
+    this.state.kpi = {
+      totalSensors: this.state.sensors.length,
+      onlineSensors: onlineCount,
+      activeAlerts: this.state.alerts.length,
+      criticalIncidents: critIncidents,
+      uptime: 98.4,
+      latencyMs: Math.floor(130 + Math.random() * 25)
+    };
+
+    // 7. Update Ticker Messages for the State
+    const stateConfig = STATES_CONFIG.find(s => s.id === stateId);
+    if (stateConfig) {
+      this.state.tickerMessages = [
+        `${stateConfig.name} SDMA Emergency Command Center operational — ${stateConfig.activeHazardsCount} active hazards monitored`,
+        `Edge telemetry stream active across ${stateConfig.districts.length} monitored district sectors`,
+        `Primary threat model: ${stateConfig.primaryThreat}`,
+        `INSAT-3DR meteorological satellite imagery synchronized`,
+        `CAP-India cell broadcast gateway connected to state telecom towers`
+      ];
+    }
+  }
+
+  // ========================================================================
+  // JURISDICTION DATA HELPERS & SELECTORS
+  // ========================================================================
+
+  getAuthorizedStateId() {
+    return this.state.loggedInStateId || 'TN';
+  }
+
+  getAuthorizedStateConfig() {
+    const id = this.getAuthorizedStateId();
+    return STATES_CONFIG.find(s => s.id === id) || STATES_CONFIG[0];
+  }
+
+  getAuthorizedDistricts() {
+    return this.getAuthorizedStateConfig().districts || [];
+  }
+
+  getAuthorizedHazardZones() {
+    const id = this.getAuthorizedStateId();
+    return STATE_HAZARD_ZONES[id] || { type: 'FeatureCollection', features: [] };
+  }
+
+  // Synthetic generators for scalability to unlisted states
+  generateSyntheticSensorsForState(stateId) {
+    const st = STATES_CONFIG.find(s => s.id === stateId) || STATES_CONFIG[0];
+    const baseLat = st.center[0];
+    const baseLng = st.center[1];
+    return [
+      { id: `${stateId}-CTR-001`, stateId, name: `${st.name} Central Hydro-Tower`, location: `${st.districts[0]?.name || st.name}`, lat: baseLat + 0.02, lng: baseLng + 0.02, status: 'Online', risk: 'Moderate', battery: 88, signal: -62, temp: 26.5, hum: 76, pm25: 45, waterLevel: 2.3, soilMoisture: 65, type: 'water', health: 'Active', lastDataTime: new Date().toISOString() },
+      { id: `${stateId}-WRN-002`, stateId, name: `${st.name} River Basin Gauge`, location: `${st.districts[1]?.name || st.name}`, lat: baseLat - 0.03, lng: baseLng + 0.04, status: 'Online', risk: 'Low', battery: 92, signal: -58, temp: 27.1, hum: 72, pm25: 38, waterLevel: 1.6, soilMoisture: 52, type: 'water', health: 'Active', lastDataTime: new Date().toISOString() },
+      { id: `${stateId}-AQI-003`, stateId, name: `${st.name} Urban AQI Sentinel`, location: `${st.name} Capital Corridor`, lat: baseLat + 0.05, lng: baseLng - 0.02, status: 'Online', risk: 'Low', battery: 85, signal: -64, temp: 28.4, hum: 68, pm25: 52, waterLevel: 1.1, soilMoisture: 42, type: 'air', health: 'Active', lastDataTime: new Date().toISOString() }
+    ];
+  }
+
+  generateSyntheticAlertsForState(stateId) {
+    const st = STATES_CONFIG.find(s => s.id === stateId) || STATES_CONFIG[0];
+    return [
+      {
+        id: `ALT-${stateId}-001`,
+        stateId,
+        hazard: 'Flood Watch',
+        severity: 'Warning',
+        title: `${st.name} River Basin Inundation Watch`,
+        location: `${st.districts[0]?.name || st.name}`,
+        timeAgo: '10 min ago',
+        timestamp: '19:15',
+        aiConfidence: 87,
+        description: `Monitored precipitation across ${st.name} catchment sectors indicate heightened runoff velocity.`,
+        coordinates: st.center,
+        sensorId: `${stateId}-CTR-001`
+      }
+    ];
+  }
+
+  generateSyntheticIncidentsForState(stateId) {
+    const st = STATES_CONFIG.find(s => s.id === stateId) || STATES_CONFIG[0];
+    return [
+      {
+        id: `${stateId}-INC-001`,
+        stateId,
+        hazard: 'Catchment Surge',
+        severity: 'Warning',
+        title: `${st.name} Riverine Pre-Emptive SOG`,
+        location: `${st.districts[0]?.name || st.name}`,
+        affectedArea: '3.8 km²',
+        detectedTime: '18:15',
+        status: 'ACTIVE',
+        aiRisk: 78,
+        assignedTeam: `${st.code} Rapid Rescue Squad`,
+        coordinates: st.center,
+        sop: [
+          { id: 'sop-1', label: 'Threshold breach acknowledged', done: true, time: '18:15' },
+          { id: 'sop-2', label: 'District EOC alert dispatched', done: true, time: '18:22' },
+          { id: 'sop-3', label: 'Field verification Squad on site', done: true, time: '18:50' },
+          { id: 'sop-4', label: 'Downstream sluice control active', done: false, time: 'Pending' }
+        ]
+      }
+    ];
+  }
+
+  // ========================================================================
+  // ROUTING & VIEW SWITCHING
+  // ========================================================================
 
   setView(viewName) {
     this.state.currentView = viewName;
+    if (viewName === 'landing') {
+      this.state.uiMode = 'LANDING';
+    } else {
+      this.state.uiMode = 'OPERATIONAL';
+    }
     this.notify('view_change', viewName);
   }
 
   setRegion(regionId) {
     this.state.selectedRegionId = regionId;
     this.notify('region_change', regionId);
-  }
-
-  setUIMode(mode) {
-    if (mode !== 'PUBLIC' && mode !== 'AUTHORITY') return;
-    this.state.uiMode = mode;
-    if (mode === 'PUBLIC') {
-      this.state.currentView = 'public';
-    } else if (mode === 'AUTHORITY') {
-      this.state.currentView = 'dashboard';
-    }
-    this.notify('ui_mode_change', mode);
-  }
-
-  setPublicLocation(locationOrId) {
-    let fullLoc = null;
-    const locId = typeof locationOrId === 'string' ? locationOrId : (locationOrId?.id || 'avinashi');
-    const matched = this.state.publicLocations.find(l => l.id.toLowerCase() === locId.toLowerCase());
-    
-    if (matched) {
-      fullLoc = typeof locationOrId === 'object' ? { ...matched, ...locationOrId } : { ...matched };
-    } else if (typeof locationOrId === 'object') {
-      fullLoc = locationOrId;
-    } else {
-      fullLoc = this.state.publicLocations[0];
-    }
-
-    this.state.selectedPublicLocation = fullLoc;
-    
-    // Also sync selectedRegionId for map consistency
-    const matchingRegion = REGIONS.find(r => r.id === fullLoc.id);
-    if (matchingRegion) {
-      this.state.selectedRegionId = fullLoc.id;
-    }
-    this.notify('public_location_change', fullLoc);
   }
 
   toggleLayer(layerKey) {
@@ -184,16 +329,17 @@ class AppStore {
       const step = incident.sop.find(s => s.id === stepId);
       if (step) {
         step.done = !step.done;
-        step.time = step.done ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : 'Pending';
-        
-        // Auto-check if all are done
+        step.time = step.done
+          ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+          : 'Pending';
+
         const allDone = incident.sop.every(s => s.done);
         if (allDone) {
           incident.status = 'RESOLVED';
-        } else if (incident.sop[3].done) {
+        } else if (incident.sop[3] && incident.sop[3].done) {
           incident.status = 'IN PROGRESS';
         }
-        
+
         this.notify('sop_update', { incidentId, stepId, done: step.done });
       }
     }
@@ -205,8 +351,7 @@ class AppStore {
     if (incident && team) {
       incident.assignedTeam = `${team.name} (${team.type})`;
       team.status = 'Deployed';
-      
-      // Mark step 4 as done
+
       const step4 = incident.sop.find(s => s.id === 'sop-4');
       if (step4) {
         step4.done = true;

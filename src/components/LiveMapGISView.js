@@ -1,8 +1,7 @@
-// Live GIS Map Full-Screen View Component
+// Live GIS Map Full-Screen View Component (State Authority Command Center)
 
 import { store } from '../state/store.js';
 import { createGISMap } from './LiveMapGIS.js';
-import { REGIONS } from '../utils/mockData.js';
 
 export function createLiveMapGISView() {
   const container = document.createElement('div');
@@ -15,20 +14,22 @@ export function createLiveMapGISView() {
 
   function render() {
     const state = store.getState();
+    const stateName = state.loggedInState || 'Tamil Nadu';
+    const authorizedDistricts = store.getAuthorizedDistricts();
 
     container.innerHTML = `
       <div class="view-header-row" style="margin-bottom: 12px;">
         <div>
           <h1 class="view-title-main">
-            <span>🗺️ GIS RISK MAP & SITUATIONAL INTELLIGENCE</span>
+            <span>🗺️ ${stateName.toUpperCase()} GIS RISK MAP & SITUATIONAL INTELLIGENCE</span>
             <span class="status-badge info">SPATIAL TELEMETRY ACTIVE</span>
           </h1>
-          <p class="view-desc-sub">Multi-hazard geospatial tracking of sensor nodes, hazard contours, and emergency response teams</p>
+          <p class="view-desc-sub">Multi-hazard geospatial tracking of sensor nodes, hazard contours, and emergency response teams across ${stateName}</p>
         </div>
         <div class="view-actions-group">
           <div class="region-dropdown-wrap">
-            <select class="region-dropdown-select" id="gis-focus-region" aria-label="Focus Catchment Region">
-              ${REGIONS.map(r => `<option value="${r.id}" ${r.id === state.selectedRegionId ? 'selected' : ''}>Focus: ${r.name}</option>`).join('')}
+            <select class="region-dropdown-select" id="gis-focus-region" aria-label="Focus Catchment District">
+              ${authorizedDistricts.map(r => `<option value="${r.id}" ${r.id === state.selectedRegionId ? 'selected' : ''}>District: ${r.name}</option>`).join('')}
             </select>
           </div>
         </div>
@@ -42,7 +43,7 @@ export function createLiveMapGISView() {
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" id="full-map-search-input" placeholder="Search node, river basin, or shelter...">
+            <input type="text" id="full-map-search-input" placeholder="Search node, river basin, or shelter in ${stateName}...">
           </div>
 
           <div class="map-control-actions">
@@ -72,7 +73,7 @@ export function createLiveMapGISView() {
 
         <!-- Legend -->
         <div class="map-legend-overlay">
-          <div class="legend-title">Hazard Severity & Assets</div>
+          <div class="legend-title">${stateName} Hazard Severity & Assets</div>
           <div class="legend-items">
             <div class="legend-item"><div class="legend-dot low"></div> Low Risk</div>
             <div class="legend-item"><div class="legend-dot mod"></div> Moderate</div>
@@ -106,10 +107,10 @@ export function createLiveMapGISView() {
       });
     }
 
-    // Focus region
-    container.querySelector('#gis-focus-region').addEventListener('change', (e) => {
+    // Focus district
+    container.querySelector('#gis-focus-region')?.addEventListener('change', (e) => {
       store.setRegion(e.target.value);
-      const reg = REGIONS.find(r => r.id === e.target.value);
+      const reg = authorizedDistricts.find(r => r.id === e.target.value);
       if (reg && gisInstance) {
         gisInstance.flyTo(reg.center, reg.zoom);
       }
@@ -117,21 +118,23 @@ export function createLiveMapGISView() {
 
     // Search input
     const searchInp = container.querySelector('#full-map-search-input');
-    searchInp.addEventListener('input', (e) => {
-      const q = e.target.value.toLowerCase().trim();
-      if (!q) return;
-      const match = store.getState().sensors.find(s => 
-        s.id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.location.toLowerCase().includes(q)
-      );
-      if (match && gisInstance) {
-        gisInstance.flyTo([match.lat, match.lng], 15);
-      }
-    });
+    if (searchInp) {
+      searchInp.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase().trim();
+        if (!q) return;
+        const match = store.getState().sensors.find(s => 
+          s.id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.location.toLowerCase().includes(q)
+        );
+        if (match && gisInstance) {
+          gisInstance.flyTo([match.lat, match.lng], 14);
+        }
+      });
+    }
 
     setTimeout(() => {
       const el = container.querySelector('#full-screen-gis-map');
       if (el) {
-        gisInstance = createGISMap('full-screen-gis-map', { isCompact: false });
+        gisInstance = createGISMap('full-screen-gis-map', { isCompact: false, showTicker: true });
         gisInstance.init(el);
       }
     }, 50);

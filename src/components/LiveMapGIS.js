@@ -1,16 +1,15 @@
-// Live GIS Map Component using Leaflet, Standard OpenStreetMap, Carto & Satellite Overlays
+// Live GIS Map Component using Leaflet, OpenStreetMap, Carto & Satellite Overlays
+// Supports State-Scoped Data Isolation for Operational Mode & National View for Landing
 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { store } from '../state/store.js';
-import { REGIONS, HAZARD_ZONES_GEOJSON } from '../utils/mockData.js';
 import { getRiskClass } from '../utils/formatters.js';
 
-export function createGISMap(containerId, options = { isCompact: false, showTicker: false, enableSelection: false }) {
+export function createGISMap(containerId, options = { isCompact: false, showTicker: false, isNational: false }) {
   let map = null;
   let resizeObserver = null;
   let currentTileLayer = null;
-  let selectedHighlightLayer = null;
   let tickerInterval = null;
   let tickerTextEl = null;
   let tickerIdx = 0;
@@ -25,8 +24,7 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
     teams: L.layerGroup(),
     shelters: L.layerGroup(),
     hazardZones: L.layerGroup(),
-    hotspots: L.layerGroup(),
-    selection: L.layerGroup()
+    hotspots: L.layerGroup()
   };
 
   const HAZARD_RISK_STYLES = {
@@ -38,7 +36,6 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
     'Watch':    { fill: '#2E8BC0', stroke: '#1E5E8C', weight: 2,   fillOpacity: 0.18, dash: '3, 5' }
   };
 
-  // Multiple high-fidelity basemap tile sources
   const BASEMAPS = {
     osm: {
       name: 'OpenStreetMap (Original)',
@@ -46,7 +43,7 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
       options: {
         maxZoom: 19,
         subdomains: ['a', 'b', 'c'],
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
       }
     },
     cartoLight: {
@@ -55,7 +52,7 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
       options: {
         maxZoom: 19,
         subdomains: 'abcd',
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        attribution: '&copy; OpenStreetMap &copy; CARTO'
       }
     },
     satellite: {
@@ -72,7 +69,7 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
       options: {
         maxZoom: 17,
         subdomains: ['a', 'b', 'c'],
-        attribution: 'Map data &copy; OpenStreetMap, SRTM | Map style &copy; OpenTopoMap'
+        attribution: 'Map style &copy; OpenTopoMap'
       }
     }
   };
@@ -93,7 +90,6 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
 
   function renderTicker() {
     if (!options.showTicker || !parentContainer) return;
-    // Ticker is a div attached at the bottom of the map container, on top of the Leaflet pane
     if (document.getElementById(containerId + '-ticker')) return;
     const tickerWrap = document.createElement('div');
     tickerWrap.id = containerId + '-ticker';
@@ -102,7 +98,6 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
       <div class="ticker-label">📡 LIVE FEED</div>
       <div class="ticker-marquee"><span class="ticker-text"></span></div>
     `;
-    // Insert just inside the parent, but NOT inside the Leaflet map div
     parentContainer.style.position = parentContainer.style.position || 'relative';
     parentContainer.appendChild(tickerWrap);
     tickerTextEl = tickerWrap.querySelector('.ticker-text');
@@ -122,56 +117,19 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
     updateTickerContent();
   }
 
-  function setSelectedLocation(coords, label = '') {
-    if (!map) return;
-    layerGroups.selection.clearLayers();
-    if (!coords) return;
-    // Double-pulse ring
-    const ringOuter = L.circle(coords, {
-      radius: 1200,
-      color: '#2E8BC0',
-      weight: 2,
-      opacity: 0.6,
-      fillColor: '#2E8BC0',
-      fillOpacity: 0.08,
-      className: 'selection-ring-outer'
-    }).addTo(layerGroups.selection);
-    const ringInner = L.circle(coords, {
-      radius: 600,
-      color: '#1E5E8C',
-      weight: 2.5,
-      opacity: 0.85,
-      fillColor: '#1E5E8C',
-      fillOpacity: 0.14,
-      className: 'selection-ring-inner'
-    }).addTo(layerGroups.selection);
-    if (label && label.length) {
-      const labelIcon = L.divIcon({
-        className: 'selection-label',
-        html: `<div class="sel-label-bubble">📍 ${label}</div>`,
-        iconSize: null,
-        iconAnchor: [0, -32]
-      });
-      L.marker(coords, { icon: labelIcon, interactive: false }).addTo(layerGroups.selection);
-    }
-    // Fly to gently (only for explicit selection)
-    map.flyTo(coords, map.getZoom() >= 12 ? map.getZoom() : 12, { duration: 1.0 });
-  }
-
   function renderHotspots(state) {
     layerGroups.hotspots.clearLayers();
-    // Hotspots = Critical or High severity alerts
-    const hotspots = state.alerts.filter(a => a.severity === 'Critical' || a.severity === 'High').slice(0, 10);
+    const hotspots = state.alerts.filter(a => a.severity === 'Critical' || a.severity === 'Warning').slice(0, 10);
     hotspots.forEach(h => {
       if (!h.coordinates) return;
-      const cls = h.severity === 'Critical' ? 'critical' : 'high';
-      const pulse = L.circle(h.coordinates, {
-        radius: 500 + (h.severity === 'Critical' ? 300 : 0),
+      const cls = h.severity === 'Critical' ? 'critical' : 'warning';
+      L.circle(h.coordinates, {
+        radius: 600 + (h.severity === 'Critical' ? 400 : 0),
         color: cls === 'critical' ? '#D94242' : '#E8833A',
-        weight: 1.2,
-        opacity: 0.55,
+        weight: 1.5,
+        opacity: 0.65,
         fillColor: cls === 'critical' ? '#D94242' : '#E8833A',
-        fillOpacity: 0.18,
+        fillOpacity: 0.20,
         className: 'hotspot-pulse hotspot-' + cls
       }).addTo(layerGroups.hotspots);
     });
@@ -184,7 +142,7 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
       try {
         map.remove();
       } catch (e) {
-        console.warn('Error removing previous map:', e);
+        console.warn('Error removing map:', e);
       }
       map = null;
     }
@@ -194,11 +152,15 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
     }
 
     const state = store.getState();
-    const currentRegion = REGIONS.find(r => r.id === state.selectedRegionId) || REGIONS[0];
+    const stateConfig = store.getAuthorizedStateConfig();
+    const activeDistrict = stateConfig.districts?.find(d => d.id === state.selectedRegionId) || stateConfig.districts?.[0] || stateConfig;
+
+    const initialCenter = options.isCompact ? (activeDistrict.center || stateConfig.center) : stateConfig.center;
+    const initialZoom = options.isCompact ? (activeDistrict.zoom || stateConfig.zoom) : (stateConfig.zoom || 8);
 
     map = L.map(el, {
-      center: currentRegion.center,
-      zoom: options.isCompact ? currentRegion.zoom - 0.5 : currentRegion.zoom,
+      center: initialCenter,
+      zoom: initialZoom,
       zoomControl: false,
       attributionControl: true
     });
@@ -211,13 +173,6 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
 
     renderLayers();
     renderHotspots(state);
-
-    // Selection highlight on initial region
-    if (options.enableSelection) {
-      const loc = state.selectedPublicLocation || currentRegion;
-      setSelectedLocation(loc.center, loc.name);
-    }
-
     renderTicker();
 
     const triggerResize = () => {
@@ -226,9 +181,8 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
       }
     };
 
-    setTimeout(triggerResize, 50);
-    setTimeout(triggerResize, 200);
-    setTimeout(triggerResize, 500);
+    setTimeout(triggerResize, 60);
+    setTimeout(triggerResize, 250);
 
     if (window.ResizeObserver && el) {
       resizeObserver = new ResizeObserver(() => {
@@ -245,17 +199,16 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
   function renderLayers() {
     if (!map) return;
     const state = store.getState();
+    const stateId = store.getAuthorizedStateId();
 
-    Object.values(layerGroups).forEach(lg => {
-      if (lg !== layerGroups.selection) lg.clearLayers();
-    });
+    Object.values(layerGroups).forEach(lg => lg.clearLayers());
 
-    // 1. Render Sensor Nodes
+    // 1. Render Authorized State Sensor Nodes Only
     if (state.mapLayers.sensors) {
       state.sensors.forEach(sensor => {
         const riskCls = getRiskClass(sensor.risk);
-        // Dim damaged / inactive sensors visually to reflect monitoring reliability
         const dimOpacity = sensor.health === 'Damaged' ? 0.35 : (sensor.health === 'Inactive' ? 0.3 : (sensor.health === 'Maintenance Required' ? 0.72 : 1.0));
+        
         const icon = L.divIcon({
           className: 'custom-gis-marker',
           html: `
@@ -294,7 +247,7 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
             </div>
           </div>
           <div class="popup-actions">
-            <button class="popup-btn primary" onclick="window.drawerManager.openSensorDrawer('${sensor.id}')">Sensor Diagnostics</button>
+            <button class="popup-btn primary" onclick="window.drawerManager?.openSensorDrawer('${sensor.id}')">Sensor Diagnostics</button>
           </div>
         `;
 
@@ -303,7 +256,7 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
       });
     }
 
-    // 2. Render Active Hazard Alerts
+    // 2. Render Active State Alerts
     state.alerts.forEach(alert => {
       const type = alert.hazard.toLowerCase();
       let targetGroup = null;
@@ -311,7 +264,7 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
       else if (type.includes('flood') && state.mapLayers.flood) targetGroup = layerGroups.flood;
       else if (type.includes('air') && state.mapLayers.air) targetGroup = layerGroups.air;
       else if (type.includes('heat') && state.mapLayers.heat) targetGroup = layerGroups.heat;
-      else if (type.includes('landslide') && state.mapLayers.flood) targetGroup = layerGroups.flood;
+      else if (state.mapLayers.flood) targetGroup = layerGroups.flood;
 
       if (targetGroup && alert.coordinates) {
         const riskCls = getRiskClass(alert.severity);
@@ -330,15 +283,15 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
         const marker = L.marker(alert.coordinates, { icon });
         const popupHTML = `
           <div class="popup-hazard-header">
-            <span class="popup-hazard-title">${alert.hazard} Event (${alert.id})</span>
+            <span class="popup-hazard-title">${alert.hazard} (${alert.id})</span>
             <span class="status-badge ${riskCls}">${alert.severity}</span>
           </div>
           <div style="font-size: 12px; font-weight: 700; color: var(--color-text-primary); margin-bottom: 4px;">${alert.title}</div>
           <div style="font-size: 11px; color: var(--color-text-muted); margin-bottom: 8px;">${alert.location} • AI Confidence: <strong>${alert.aiConfidence}%</strong></div>
           <div style="font-size: 11px; color: var(--color-text-secondary); background: var(--color-surface-soft); padding: 6px; border-radius: 6px; border: 1px solid var(--color-border-subtle);">${alert.description}</div>
           <div class="popup-actions">
-            <button class="popup-btn primary" onclick="window.drawerManager.openAlertDrawer('${alert.id}')">View Details & AI</button>
-            <button class="popup-btn secondary" onclick="window.appStore.setView('incidents')">Dispatch Team</button>
+            <button class="popup-btn primary" onclick="window.drawerManager?.openAlertDrawer('${alert.id}')">View Details & AI</button>
+            <button class="popup-btn secondary" onclick="window.location.hash = '#incidents'">Dispatch Team</button>
           </div>
         `;
         marker.bindPopup(popupHTML);
@@ -369,7 +322,7 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
           <div style="font-size: 11px; color: var(--color-text-secondary);">Role: <strong>${team.type}</strong></div>
           <div style="font-size: 11px; color: var(--color-text-muted);">Personnel: ${team.personnel} | ETA: <strong>${team.eta}</strong></div>
           <div class="popup-actions" style="margin-top: 8px;">
-            <button class="popup-btn primary" onclick="window.appStore.setView('incidents')">Manage Mission</button>
+            <button class="popup-btn primary" onclick="window.location.hash = '#incidents'">Manage Mission</button>
           </div>
         `);
         layerGroups.teams.addLayer(marker);
@@ -403,17 +356,16 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
       });
     }
 
-    // 5. Render Hazard Polygons with intensity-based styling
-    const showAnyHazard = state.mapLayers.flood || state.mapLayers.fire || state.mapLayers.heat || state.mapLayers.air;
-    if (showAnyHazard) {
-      HAZARD_ZONES_GEOJSON.features.forEach(feat => {
+    // 5. Render State Hazard Polygons
+    const hazardZones = store.getAuthorizedHazardZones();
+    if (hazardZones && hazardZones.features) {
+      hazardZones.features.forEach(feat => {
         const hazard = feat.properties.hazard;
         const isFlood = hazard === 'Flood';
         const isFire = hazard === 'Forest Fire';
-        // Gate by active layer toggle
         if (isFlood && !state.mapLayers.flood) return;
         if (isFire && !state.mapLayers.fire) return;
-        if (!isFlood && !isFire) return; // Only support these two currently
+
         const riskLevel = feat.properties.risk || 'Moderate';
         const style = HAZARD_RISK_STYLES[riskLevel] || HAZARD_RISK_STYLES['Moderate'];
         const poly = L.geoJSON(feat, {
@@ -424,9 +376,10 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
             fillColor: style.fill,
             fillOpacity: style.fillOpacity,
             dashArray: style.dash,
-            className: 'hazard-polygon hazard-' + (isFlood ? 'flood' : 'fire')
+            className: 'hazard-polygon'
           }
         });
+
         poly.bindPopup(`
           <div class="popup-hazard-header">
             <span class="popup-hazard-title">${feat.properties.name}</span>
@@ -435,14 +388,13 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
           <div style="font-size: 11px; color: var(--color-text-secondary);">Hazard Type: <strong>${feat.properties.hazard}</strong></div>
           <div style="font-size: 11px; color: var(--color-text-secondary);">Estimated Inundation Perimeter: <strong>${feat.properties.area}</strong></div>
           <div class="popup-actions" style="margin-top: 8px;">
-            <button class="popup-btn primary" onclick="window.drawerManager.openAIDrawer('${feat.properties.hazard}')">View AI Prediction</button>
+            <button class="popup-btn primary" onclick="window.drawerManager?.openAIDrawer('${feat.properties.hazard}')">View AI Prediction</button>
           </div>
         `);
         layerGroups.hazardZones.addLayer(poly);
       });
     }
 
-    // Re-render hotspots
     renderHotspots(state);
   }
 
@@ -451,9 +403,6 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
       clearInterval(tickerInterval);
       tickerInterval = null;
     }
-    if (tickerTextEl && tickerTextEl.parentElement && tickerTextEl.parentElement.parentElement) {
-      tickerTextEl.parentElement.parentElement.removeChild(tickerTextEl.parentElement.parentElement);
-    }
     if (resizeObserver) {
       resizeObserver.disconnect();
       resizeObserver = null;
@@ -461,9 +410,7 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
     if (map) {
       try {
         map.remove();
-      } catch (e) {
-        // ignore
-      }
+      } catch (e) {}
       map = null;
     }
   }
@@ -473,7 +420,7 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
     refresh: renderLayers,
     setBasemap: setBasemap,
     getActiveBasemap: () => activeBasemapKey,
-    flyTo: (coords, zoom = 14) => {
+    flyTo: (coords, zoom = 12) => {
       if (map && coords) {
         map.flyTo(coords, zoom, { duration: 1.2 });
       }
@@ -481,8 +428,6 @@ export function createGISMap(containerId, options = { isCompact: false, showTick
     invalidateSize: () => {
       if (map) map.invalidateSize();
     },
-    setSelectedLocation,
-    updateTicker: updateTickerContent,
     destroy
   };
 }
